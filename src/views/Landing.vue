@@ -1,0 +1,31 @@
+<template>
+  <div class="">
+    <div class="mt-8 ml-4">
+      <div class="flex justify-between">
+        <div class="text-2xl font-semibold underline text-white">
+          Reprendre la lecture :
+        </div>
+        <div class="flex gap-2">
+          <div>
+            <v-icon name="bi-forward" color="white" class="rounded-3xl border-2 rotate-180 cursor-pointer" scale="2"/>
+          </div>
+          <div>
+            <v-icon name="bi-forward" color="white" class="rounded-3xl border-2 cursor-pointer" scale="2"/>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 overflow-auto flex gap-2 no-scrollbar">
+        <AlbumData v-for="i in 6" :album-data="{ 'id': 1000, name: 'Guillaume la merde' }" />
+      </div>
+    </div>
+  </div>
+</template>
+<script lang="ts">
+import AlbumData from '@/components/AlbumData.vue';
+
+export default {
+  components: {
+    AlbumData
+  }
+}
+</script>
