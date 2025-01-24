@@ -1,5 +1,5 @@
 <template>
-  <div class="">
+  <Teleport to="body">
     <div class="mt-8 ml-4">
       <div class="flex justify-between">
         <div class="text-2xl font-semibold underline text-white">
@@ -18,13 +18,15 @@
         <AlbumData v-for="i in 6" :album-data="{ 'id': 1000, name: 'Guillaume la merde' }" />
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 <script lang="ts">
 import AlbumData from '@/components/AlbumData.vue';
+import { Teleport } from 'vue';
 
 export default {
   components: {
+    Teleport,
     AlbumData
   }
 }
