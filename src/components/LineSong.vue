@@ -15,9 +15,10 @@
                 <div class="ml-2">
                     <div class="font-semibold cursor-pointer text-lg mt-2">Salut</div>
                     <div class="flex opacity-50 gap-2">
-                        <div class="font-bold  hover:underline cursor-pointer">Ziak</div>
+                        <router-link to="/artist" class="font-bold  hover:underline cursor-pointer">Ziak</router-link>
                         <div class="font-extrabold">·</div>
-                        <div class="font-semibold hover:underline cursor-pointer">Quatre</div>
+                        <router-link to="/album"
+                            class="font-semibold hover:underline cursor-pointer">Quatre</router-link>
                     </div>
                 </div>
             </div>
@@ -35,6 +36,8 @@
     </div>
 </template>
 <script lang="ts">
+import router from '@/router';
+
 
 
 export interface SongData {
