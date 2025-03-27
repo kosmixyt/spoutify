@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="mt-8 ml-4">
+    <div class="mt-[calc(48px)] relative w-[calc(100vw-240px)] left-[calc(240px)] pl-4">
       <div class="flex justify-between">
         <div class="text-2xl font-semibold underline text-white">
           Reprendre la lecture :
