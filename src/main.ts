@@ -6,6 +6,7 @@ import router from "./router";
 import { OhVueIcon, addIcons } from "oh-vue-icons";
 import * as FaIcons from "oh-vue-icons/icons/fa";
 import * as Bi from "oh-vue-icons/icons/bi";
+import GlobalAudioPlayer from '@/components/GlobalAudioPlayer.vue';
 
 addIcons(...Object.values({ ...FaIcons }));
 addIcons(...Object.values({ ...Bi }));
@@ -13,4 +14,5 @@ const app = createApp(App);
 
 app.use(router);
 app.component("v-icon", OhVueIcon);
+app.component('GlobalAudioPlayer', GlobalAudioPlayer);
 app.mount("#app");
