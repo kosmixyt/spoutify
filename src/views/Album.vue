@@ -1,21 +1,21 @@
 <template>
-    <div>
+    <div v-if="Object.keys(albumData).length > 0">
         <div class="flex justify-center">
-            <div @contextmenu.prevent="onRightClick">
-                <img src="https://picsum.photos/200/200?random=3" alt="Album"
-                    class="w-56 h-56 object-cover rounded-lg" />
+            <div>
+                <img :src="bestQualityTumb().url" alt="Album" class="w-56 h-56 object-cover rounded-lg" />
             </div>
             <div class="text-white flex flex-col items-center justify-center">
                 <div class="ml-3 opacity-50">Album</div>
-                <div class="ml-6 text-6xl font-extrabold hover:underline">Feu</div>
+                <div class="ml-6 text-6xl font-extrabold hover:underline">{{ albumData.title }}</div>
                 <div class="flex flex-col gap-1 opacity-50 ml-3 items-center mt-4">
                     <div class="flex items-center gap-2">
-                        <div class="hover:underline cursor-pointer flex items-center">
+                        <div v-for="artist in albumData.artists"
+                            class="hover:underline cursor-pointer flex items-center">
                             <div>
                                 <img src="https://picsum.photos/200/200?random=3" alt="Album"
                                     class="w-8 h-8 object-cover rounded-full" />
                             </div>
-                            <router-link to="/artist" class="ml-2">Nekfeu</router-link>
+                            <router-link :to="'/artist/' + artist.id" class="ml-2">{{ artist.name }}</router-link>
                         </div>
                         <div>2015</div>
                     </div>
@@ -36,29 +36,51 @@
 
         </div>
         <div class="w-[95%] mx-auto mt-8">
-            <LineSong v-for="i in 10" />
+            <LineSong :force-album-data="toAlbumData()" :song-data="i" :force-thunm="albumData.thumbnails[0].url"
+                v-for="i in albumData.tracks" />
         </div>
     </div>
 </template>
 
 
 <script lang="ts">
-import type { AlbumData } from '@/components/AlbumData.vue';
+import { GetAlbum, getBestQualitythumbnail } from '@/api';
 import LineSong from '@/components/LineSong.vue';
+import router from '@/router';
+import type { Album, AlbumData, Thumbnail } from '@/type';
 
 export default {
     components: {
         LineSong
     },
-    props: {
-        albumData: {
-            type: Object as () => AlbumData,
-            required: true
+    data() {
+        return {
+            loading: true,
+            albumData: {} as AlbumData,
         }
     },
     methods: {
-        onRightClick(event: MouseEvent) {
-            alert('Clic droit personnalisé sur l\'image de l\'album');
+        toAlbumData(): Album {
+            return {
+                id: this.albumData.audioPlaylistId,
+                name: this.albumData.title,
+            }
+        },
+        bestQualityTumb(): Thumbnail {
+            return getBestQualitythumbnail(this.albumData.thumbnails);
+        }
+    },
+    watch: {
+        '$route.params.id': {
+            immediate: true,
+            async handler() {
+                if (!this.$route.params.id) router.push('/');
+                this.loading = true;
+                console.log(this.$route.params.id);
+                this.albumData = await GetAlbum(this.$route.params.id as string);
+                console.log(this.albumData);
+                this.loading = false;
+            }
         }
     }
 }

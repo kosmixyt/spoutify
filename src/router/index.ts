@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Landing from "../views/Landing.vue";
 import Artist from "@/views/Artist.vue";
 import Album from "@/views/Album.vue";
+import Search from "@/views/Search.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,14 +13,19 @@ const router = createRouter({
       component: Landing,
     },
     {
-      path: "/artist",
+      path: "/artist/:id",
       name: "Artist",
       component: Artist,
     },
     {
-      path: "/album",
+      path: "/album/:id",
       name: "Album",
       component: Album,
+    },
+    {
+      path: "/search/",
+      name: "Search",
+      component: Search
     }
     // {
     //   path: "/",
