@@ -1,6 +1,53 @@
 <template>
-  <div v-if="loading || Object.keys(data).length == 0" class="flex justify-center items-center min-h-screen">
-    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500"></div>
+  <div v-if="loading" class="px-0 xl:px-40 py-6">
+    <!-- Hero section skeleton -->
+    <div class="relative mb-10">
+      <v-skeleton-loader type="image" height="320px" class="w-full rounded-lg"></v-skeleton-loader>
+      <div class="absolute bottom-6 left-6 flex items-end gap-4">
+        <v-skeleton-loader type="avatar" width="140px" height="140px" class="rounded-full"></v-skeleton-loader>
+        <div>
+          <v-skeleton-loader type="text" width="200px" height="42px" class="mb-2"></v-skeleton-loader>
+          <v-skeleton-loader type="text" width="140px"></v-skeleton-loader>
+        </div>
+      </div>
+    </div>
+
+    <!-- About section skeleton -->
+    <div class="mb-10">
+      <v-skeleton-loader type="text" width="100px" class="mb-4"></v-skeleton-loader>
+      <v-skeleton-loader type="paragraph" class="mb-4"></v-skeleton-loader>
+    </div>
+
+    <div class="border-b border-gray-800 mb-8"></div>
+
+    <!-- Songs skeleton -->
+    <div class="mb-10">
+      <v-skeleton-loader type="text" width="180px" class="mb-4"></v-skeleton-loader>
+      <div class="flex flex-col gap-2">
+        <v-skeleton-loader v-for="i in 5" :key="`song-${i}`" type="list-item-two-line"></v-skeleton-loader>
+      </div>
+    </div>
+
+    <!-- Albums skeleton -->
+    <div class="mb-10">
+      <v-skeleton-loader type="text" width="100px" class="mb-4"></v-skeleton-loader>
+      <div class="flex gap-4 overflow-hidden">
+        <v-skeleton-loader v-for="i in 5" :key="`album-${i}`" type="card" width="160px"
+          height="200px"></v-skeleton-loader>
+      </div>
+    </div>
+
+    <!-- Clips skeleton -->
+    <div class="mb-10">
+      <v-skeleton-loader type="text" width="80px" class="mb-4"></v-skeleton-loader>
+      <div class="flex gap-4 overflow-hidden">
+        <v-skeleton-loader v-for="i in 4" :key="`clip-${i}`" type="card" width="256px"
+          height="180px"></v-skeleton-loader>
+      </div>
+    </div>
+  </div>
+  <div v-else-if="Object.keys(data).length == 0" class="flex justify-center items-center min-h-screen">
+    <div class="text-gray-400 text-xl">Artist not found</div>
   </div>
   <div v-else class="relative">
     <img :src="getLargestThumb()" :alt="data.name" class="w-full object-cover h-80" />
@@ -174,5 +221,19 @@ export default {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Add custom styling for v-skeleton-loader */
+:deep(.v-skeleton-loader__image),
+:deep(.v-skeleton-loader__avatar),
+:deep(.v-skeleton-loader__text),
+:deep(.v-skeleton-loader__paragraph),
+:deep(.v-skeleton-loader__list-item-two-line),
+:deep(.v-skeleton-loader__card) {
+  @apply bg-gray-800;
+}
+
+:deep(.v-skeleton-loader__bone) {
+  background-image: linear-gradient(90deg, rgba(55, 65, 81, 0.3), rgba(75, 85, 99, 0.5), rgba(55, 65, 81, 0.3));
 }
 </style>

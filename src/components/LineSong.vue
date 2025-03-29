@@ -70,6 +70,10 @@
                 <v-icon name="bi-disc" class="mr-2" />
                 Go to album
             </div>
+            <div class="menu-item" @click="seeOnyoutube">
+                <v-icon name="bi-youtube" class="mr-2" />
+                See on Youtube
+            </div>
             <div class="menu-item" @click="shareSong">
                 <v-icon name="bi-share" class="mr-2" />
                 Share
@@ -256,6 +260,12 @@ export default {
             if (albumData && albumData.id) {
                 router.push(`/album/${albumData.id}`);
             }
+            this.hideContextMenu();
+        },
+        seeOnyoutube() {
+            // Implement see on youtube functionality
+            const youtubeUrl = `https://www.youtube.com/watch?v=${this.songData.videoId}`;
+            window.open(youtubeUrl, '_blank');
             this.hideContextMenu();
         },
         download() {

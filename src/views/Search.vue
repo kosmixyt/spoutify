@@ -11,9 +11,6 @@
         <!-- Results sections -->
         <div v-else>
             <!-- Empty search message -->
-            <div v-if="query === ''" class="mt-8 text-center text-zinc-400">
-                tap something to search
-            </div>
 
             <!-- Top Result Section -->
             <div v-if="getTopResult()" class="mt-3 sm:mt-4 md:mt-8">
@@ -194,6 +191,11 @@ export default {
             // Set a new timer
             this.searchTimer = setTimeout(async () => {
                 console.log("Searching for:", query);
+                if (query === "") {
+                    this.results = [];
+                    this.loading = false;
+                    return;
+                }
                 this.results = await Search(query, "");
                 console.log(this.results);
                 this.loading = false;

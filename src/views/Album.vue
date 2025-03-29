@@ -15,12 +15,9 @@
                     <div class="flex items-center gap-2">
                         <div v-for="artist in albumData.artists"
                             class="hover:underline cursor-pointer flex items-center">
-                            <div>
-                                <img alt="Album" class="w-8 h-8 object-cover rounded-full" />
-                            </div>
                             <router-link :to="'/artist/' + artist.id" class="ml-2">{{
                                 artist.name
-                            }}</router-link>
+                                }}</router-link>
                         </div>
                         <div>{{ albumData.year }}</div>
                     </div>
@@ -42,8 +39,25 @@
             </div>
         </div>
         <div class="w-[95%] mx-auto mt-8">
-            <LineSong :force-album-data="toAlbumData()" :song-data="i" :force-thunm="albumData.thumbnails[0].url"
-                v-for="i in albumData.tracks" />
+            <div class="flex justify-between mb-4 items-center">
+                <h2 class="text-xl font-bold text-white">Titres</h2>
+                <div class="flex items-center bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-md">
+                    <label for="sortBy" class="text-white px-3 py-2 text-sm">Trier par:</label>
+                    <select id="sortBy" v-model="sortBy"
+                        class="bg-gray-700 text-white px-4 py-2 pr-8 rounded-r-lg border-l border-gray-600 appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer transition-all">
+                        <option value="default">Par défaut</option>
+                        <option value="views">Nombre de vues</option>
+                        <option value="duration">Durée</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <LineSong :force-album-data="toAlbumData()" :song-data="track" :force-thunm="albumData.thumbnails[0].url"
+                v-for="track in sortedTracks" :key="track.videoId" />
         </div>
     </div>
 </template>
@@ -70,7 +84,26 @@ export default {
             loading: true,
             albumData: {} as AlbumData,
             toastId: null as string | null,
+            sortBy: "default",
         };
+    },
+    computed: {
+        sortedTracks() {
+            if (!this.albumData.tracks) return [];
+
+            if (this.sortBy === "default") {
+                return this.albumData.tracks;
+            } else if (this.sortBy === "views") {
+                return [...this.albumData.tracks].sort((a, b) => {
+                    return this.parseViewCount(b.views) - this.parseViewCount(a.views);
+                });
+            } else if (this.sortBy === "duration") {
+                return [...this.albumData.tracks].sort((a, b) => {
+                    return this.parseDuration(b.duration) - this.parseDuration(a.duration);
+                });
+            }
+            return this.albumData.tracks;
+        }
     },
     methods: {
         toAlbumData(): Album {
@@ -138,13 +171,46 @@ export default {
             playTrack(track);
         },
         isPlaylist(): boolean {
-            // return this.$route.query.isPlaylist?.length > 0 ? true : false;
-            // if (this.$route.query.isPlaylist) {
-            //     return this.$route.query.isPlaylist.length > 0 ? true : false;
-            // } else {
-            //     return false;
-            // }
             return this.$route.query.isPlaylist ? true : false;
+        },
+        parseViewCount(viewsStr) {
+            if (!viewsStr) return 0;
+
+            // Nettoyer la chaîne pour ne garder que les chiffres et les suffixes K/M/B
+            const cleaned = viewsStr.replace(/[^\d,\.KMB]/gi, '');
+
+            // Extraire le nombre et le suffixe
+            const match = cleaned.match(/^([\d,\.]+)([KMB])?$/i);
+            if (!match) return 0;
+
+            // Convertir la partie numérique en enlevant les virgules et points non-décimaux
+            const numPart = parseFloat(match[1].replace(/,/g, ''));
+            const suffix = match[2] ? match[2].toUpperCase() : '';
+
+            // Appliquer les multiplicateurs en fonction du suffixe
+            switch (suffix) {
+                case 'K': return numPart * 1000;
+                case 'M': return numPart * 1000000;
+                case 'B': return numPart * 1000000000;
+                default: return numPart;
+            }
+        },
+
+        parseDuration(durationStr) {
+            if (!durationStr) return 0;
+
+            // Format attendu: "MM:SS" ou "HH:MM:SS"
+            const parts = durationStr.split(':').map(Number);
+
+            if (parts.length === 2) {
+                // Format MM:SS
+                return parts[0] * 60 + parts[1];
+            } else if (parts.length === 3) {
+                // Format HH:MM:SS
+                return parts[0] * 3600 + parts[1] * 60 + parts[2];
+            }
+
+            return 0;
         },
     },
     watch: {
@@ -163,3 +229,17 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em;
+    padding-right: 2rem;
+}
+
+.sort-container {
+    position: relative;
+}
+</style>

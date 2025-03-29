@@ -626,9 +626,7 @@ export default defineComponent({
 
         handleTouchMove(event: TouchEvent) {
             if (!this.isTransitioning || event.touches.length !== 1) return;
-
             const touchY = event.touches[0].clientY;
-
             if (this.expandedPlayer) {
                 // When expanded, calculate delta for downward swipe
                 this.touchDeltaY = Math.max(0, touchY - this.touchStartY);
@@ -636,7 +634,6 @@ export default defineComponent({
                 // When collapsed, calculate delta for upward swipe
                 this.touchDeltaY = Math.min(0, touchY - this.touchStartY);
             }
-
             // Apply a subtle acceleration factor to make the initial movement feel more responsive
             // This makes small movements feel bigger at the beginning of the gesture
             const accelerationFactor = 1.3;

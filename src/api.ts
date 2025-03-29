@@ -3,12 +3,13 @@ import type {
   Album,
   AlbumData,
   Artist,
+  Home,
   MainArtist,
   SearchItem,
   Thumbnail,
 } from "./type";
 
-export const app_url = "http://192.168.1.51:8000";
+export const app_url = "https://uw4s8co8wgkkg8g004cs8os8.kosmix.me";
 
 export var token = "";
 export async function getToken(): Promise<string> {
@@ -33,7 +34,7 @@ export async function getToken(): Promise<string> {
   return data.access_token;
 }
 
-export async function GetHome() {
+export async function GetHome(): Promise<Home> {
   const res = await fetch(`${app_url}/home`, {
     method: "GET",
     headers: {
@@ -45,7 +46,7 @@ export async function GetHome() {
   if (data.error) {
     throw new Error(data.error);
   }
-  return data as AlbumData[];
+  return data as Home;
 }
 
 export async function DownloadAlbum(

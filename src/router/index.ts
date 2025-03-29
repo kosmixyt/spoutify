@@ -19,14 +19,14 @@ const router = createRouter({
     },
     {
       path: "/album/:id",
-      name: "Album",
+      name: "album",
       component: Album,
     },
     {
       path: "/search/",
       name: "Search",
-      component: Search
-    }
+      component: Search,
+    },
     // {
     //   path: "/",
     //   name: "home",
