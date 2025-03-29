@@ -1,7 +1,7 @@
 <template>
-    <div class="text-white px-1 sm:px-2 md:px-0">
+    <div class="text-zinc-100 px-1 sm:px-2 md:px-0">
         <div class="text-xl sm:text-2xl md:text-4xl font-bold md:text-left mt-3 md:mt-0 text-center">Search : {{ query
-            }}</div>
+        }}</div>
 
         <!-- Loading indicator -->
         <div v-if="loading" class="flex justify-center mt-8">
@@ -11,7 +11,7 @@
         <!-- Results sections -->
         <div v-else>
             <!-- Empty search message -->
-            <div v-if="query === ''" class="mt-8 text-center text-gray-400">
+            <div v-if="query === ''" class="mt-8 text-center text-zinc-400">
                 tap something to search
             </div>
 
@@ -19,46 +19,46 @@
             <div v-if="getTopResult()" class="mt-3 sm:mt-4 md:mt-8">
                 <h2 class="text-base sm:text-lg md:text-2xl font-bold mb-1 sm:mb-2 md:mb-4">Top Result</h2>
                 <div v-if="getTopResult().resultType === 'song'"
-                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors">
+                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors">
                     <img :src="bestQualityTumb(getTopResult().thumbnails)"
                         class="w-12 h-12 sm:w-16 sm:h-16 md:w-32 md:h-32 object-cover rounded" />
                     <div class="ml-2 sm:ml-3 md:ml-4 overflow-hidden">
                         <div class="text-base sm:text-lg md:text-3xl font-bold truncate">{{ getTopResult().title }}
                         </div>
-                        <div class="text-xs sm:text-sm md:text-xl text-gray-400 truncate">{{ getTopResult().artist }}
+                        <div class="text-xs sm:text-sm md:text-xl text-zinc-400 truncate">{{ getTopResult().artist }}
                         </div>
-                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-gray-500">Song</div>
+                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-zinc-500">Song</div>
                     </div>
                 </div>
 
                 <router-link :to="'/artist/' + getTopResult()?.artists[0].id"
                     v-else-if="getTopResult()!.resultType === 'artist'"
-                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors">
+                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors">
                     <img :src="bestQualityTumb(getTopResult()!.thumbnails).url"
                         class="w-12 h-12 sm:w-16 sm:h-16 md:w-32 md:h-32 object-cover rounded-full" />
                     <div class="ml-2 sm:ml-3 md:ml-4 overflow-hidden">
                         <div class="text-base sm:text-lg md:text-3xl font-bold truncate">{{
                             getTopResult()!.artists[0]!.name }}</div>
-                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-gray-500">Artist</div>
+                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-zinc-500">Artist</div>
                     </div>
                 </router-link>
 
                 <router-link :to="'/album/' + getTopResult()?.playlistId + '?isPlaylist=true'"
                     v-else-if="getTopResult()!.resultType === 'playlist'"
-                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors">
+                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors">
                     <img :src="bestQualityTumb(getTopResult()!.thumbnails).url"
                         class="w-12 h-12 sm:w-16 sm:h-16 md:w-32 md:h-32 object-cover rounded" />
                     <div class="ml-2 sm:ml-3 md:ml-4 overflow-hidden">
                         <div class="text-base sm:text-lg md:text-3xl font-bold truncate">{{ getTopResult().title }}
                         </div>
-                        <div class="text-xs sm:text-sm md:text-xl text-gray-400 truncate">{{
+                        <div class="text-xs sm:text-sm md:text-xl text-zinc-400 truncate">{{
                             getTopResult().description }}</div>
-                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-gray-500">Playlist</div>
+                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-zinc-500">Playlist</div>
                     </div>
                 </router-link>
 
-                <div v-else-if="getTopResult()!.resultType === 'video'"
-                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors">
+                <div @click="() => play(getTopResult())" v-else-if="getTopResult()!.resultType === 'video'"
+                    class="flex items-center p-1.5 sm:p-2 md:p-4 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors">
                     <img :src="bestQualityTumb(getTopResult().thumbnails).url"
                         class="w-12 h-12 sm:w-16 sm:h-16 md:w-32 md:h-32 object-cover rounded" />
                     <div class="ml-2 sm:ml-3 md:ml-4 overflow-hidden">
@@ -67,9 +67,9 @@
                         <div v-for="artist in getTopResult().artists"
                             class="hover:underline cursor-pointer flex items-center opacity-50">
                             <router-link :to="'/artist/' + artist.id" class="ml-1 md:ml-2">{{ artist.name
-                                }}</router-link>
+                            }}</router-link>
                         </div>
-                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-gray-500">Video</div>
+                        <div class="mt-0.5 sm:mt-1 md:mt-2 text-xs md:text-base text-zinc-500">Video</div>
                     </div>
                 </div>
             </div>
@@ -82,61 +82,63 @@
                     's' }}</h2>
                 <div class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 sm:gap-2 md:gap-3">
                     <!-- Songs -->
-                    <div v-if="type === 'song'" v-for="item in getResultsByType(type)" :key="item.videoId"
-                        class="p-1 sm:p-2 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors touch-manipulation">
+                    <div @click="() => play(item)" v-if="type === 'song'" v-for="item in getResultsByType(type)"
+                        :key="item.videoId"
+                        class="p-1 sm:p-2 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors touch-manipulation">
                         <img :src="bestQualityTumb(item.thumbnails).url"
                             class="w-full aspect-square object-cover rounded" />
                         <div class="mt-0.5 sm:mt-1">
                             <div class="font-semibold text-xs sm:text-sm truncate">{{ item.title }}</div>
-                            <div class="text-gray-400 text-xs truncate hidden sm:block">{{ item.artist }}</div>
+                            <div class="text-zinc-400 text-xs truncate hidden sm:block">{{ item.artist }}</div>
                         </div>
                     </div>
 
                     <!-- Artists -->
                     <router-link v-if="type === 'artist'" v-for="item in getResultsByType(type)" :key="item.browseId"
                         :to="'/artist/' + item.browseId"
-                        class="p-1 sm:p-2 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors touch-manipulation">
+                        class="p-1 sm:p-2 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors touch-manipulation">
                         <img :src="bestQualityTumb(item.thumbnails).url"
                             class="w-full aspect-square object-cover rounded-full" />
                         <div class="mt-0.5 sm:mt-1">
                             <div class="font-semibold text-xs sm:text-sm truncate">{{ item.artist }}</div>
-                            <div class="text-gray-400 text-xs hidden sm:block">Artist</div>
+                            <div class="text-zinc-400 text-xs hidden sm:block">Artist</div>
                         </div>
                     </router-link>
 
                     <!-- Albums -->
                     <router-link v-if="type === 'album'" v-for="item in getResultsByType(type)" :key="item.browseId"
                         :to="'/album/' + item.browseId"
-                        class="p-1 sm:p-2 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors touch-manipulation">
+                        class="p-1 sm:p-2 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors touch-manipulation">
                         <img :src="bestQualityTumb(item.thumbnails).url"
                             class="w-full aspect-square object-cover rounded" />
                         <div class="mt-0.5 sm:mt-1">
                             <div class="font-semibold text-xs sm:text-sm truncate">{{ item.title }}</div>
-                            <div class="text-gray-400 text-xs truncate">{{ item.artist }}</div>
+                            <div class="text-zinc-400 text-xs truncate">{{ item.artist }}</div>
                         </div>
                     </router-link>
 
                     <!-- Playlists -->
                     <router-link v-if="type === 'playlist'" v-for="item in getResultsByType(type)" :key="item.browseId"
                         :to="'/album/' + item.browseId + '?isPlaylist=true'"
-                        class="p-1 sm:p-2 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors touch-manipulation">
+                        class="p-1 sm:p-2 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors touch-manipulation">
                         <img :src="bestQualityTumb(item.thumbnails).url"
                             class="w-full aspect-square object-cover rounded" />
                         <div class="mt-0.5 sm:mt-1">
                             <div class="font-semibold text-xs sm:text-sm truncate">{{ item.title }}</div>
-                            <div class="text-gray-400 text-xs truncate">{{ item.description }}</div>
+                            <div class="text-zinc-400 text-xs truncate">{{ item.description }}</div>
                         </div>
                     </router-link>
 
                     <!-- Videos -->
-                    <div v-if="type === 'video'" v-for="item in getResultsByType(type)" :key="item.videoId"
-                        class="p-1 sm:p-2 bg-gray-800 rounded-lg hover:bg-gray-700 active:bg-gray-600 cursor-pointer transition-colors touch-manipulation">
+                    <div @click="() => play(item)" v-if="type === 'video'" v-for="item in getResultsByType(type)"
+                        :key="item.videoId"
+                        class="p-1 sm:p-2 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors touch-manipulation">
                         <img :src="bestQualityTumb(item.thumbnails).url"
                             class="w-full aspect-square object-cover rounded" />
                         <div class="mt-0.5 sm:mt-1">
                             <div class="font-semibold text-xs sm:text-sm truncate">{{ item.title }}</div>
                             <div v-for="artist in item.artists" :key="artist.id"
-                                class="text-gray-400 text-xs hover:underline">
+                                class="text-zinc-400 text-xs hover:underline">
                                 <router-link :to="'/artist/' + artist.id">{{ artist.name }}</router-link>
                             </div>
                         </div>
@@ -145,7 +147,7 @@
             </div>
 
             <!-- No results message -->
-            <div v-if="results.length === 0 && query !== ''" class="mt-8 text-center text-gray-400">
+            <div v-if="results.length === 0 && query !== ''" class="mt-8 text-center text-zinc-400">
                 No results found for "{{ query }}"
             </div>
         </div>
@@ -155,6 +157,7 @@
 <script lang="ts">
 import { getBestQualitythumbnail, Search } from '@/api';
 import LineSong from '@/components/LineSong.vue';
+import { playTrack, type PlayerServiceRequest } from '@/services/playerService';
 import type { SearchItem, Thumbnail } from '@/type';
 
 
@@ -210,6 +213,17 @@ export default {
         getTopResult() {
             const topResults = this.results.filter(item => item.category === "Top result");
             return topResults.length > 0 ? topResults[0] : null;
+        },
+        play(item: SearchItem) {
+
+            const track: PlayerServiceRequest = {
+                Artists: item.artists ?? [],
+                cover: this.bestQualityTumb(item.thumbnails).url,
+                title: item.title ?? "",
+                videoId: item.videoId ?? "",
+            };
+            playTrack(track);
+
         },
         getUniqueResultTypes() {
             // Get all result types excluding those from top result items

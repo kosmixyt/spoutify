@@ -1,7 +1,7 @@
 <template>
     <div v-if="Object.keys(videoData).length > 0"
         :class="['relative group transition-all duration-300 hover:scale-105 my-4', { 'border-container': isClicked }]"
-        @click="toggleBorder">
+        @click="toggleBorder; play">
         <div class="relative overflow-hidden rounded-lg hover:shadow-lg">
             <img :src="thumbnail?.url" alt="Video Thumbnail"
                 class="w-full rounded-lg transition-transform duration-500 group-hover:blur-sm group-hover:brightness-75" />
@@ -31,6 +31,7 @@
 import { computed, ref } from 'vue';
 import { getBestQualitythumbnail } from '@/api';
 import type { MiniVideo } from '@/type';
+import { playTrack, type PlayerServiceRequest } from '@/services/playerService';
 
 const props = defineProps<{
     videoData: MiniVideo
@@ -40,10 +41,23 @@ const thumbnail = computed(() => {
     return getBestQualitythumbnail(props.videoData.thumbnails);
 });
 
+
+
+const play = computed(() => {
+    const track: PlayerServiceRequest = {
+        Artists: props.videoData.artists,
+        cover: getBestQualitythumbnail(props.videoData.thumbnails)?.url,
+        title: props.videoData.title,
+        videoId: props.videoData.videoId,
+    }
+    playTrack(track);
+})
+
 const isClicked = ref(false);
 
 const toggleBorder = () => {
     isClicked.value = !isClicked.value;
+
 };
 </script>
 

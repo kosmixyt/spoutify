@@ -1,4 +1,6 @@
+import JSZip from "jszip";
 import type {
+  Album,
   AlbumData,
   Artist,
   MainArtist,
@@ -6,7 +8,7 @@ import type {
   Thumbnail,
 } from "./type";
 
-export const app_url = "http://127.0.0.1:8000";
+export const app_url = "http://192.168.1.51:8000";
 
 export var token = "";
 export async function getToken(): Promise<string> {
@@ -29,6 +31,123 @@ export async function getToken(): Promise<string> {
     token = data.access_token;
   }
   return data.access_token;
+}
+
+export async function GetHome() {
+  const res = await fetch(`${app_url}/home`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(data.error);
+  }
+  return data as AlbumData[];
+}
+
+export async function DownloadAlbum(
+  data: AlbumData,
+  name: string,
+  progress: (c: number, t: number) => void
+) {
+  const zip = new JSZip();
+  const folder = zip.folder(name);
+  if (!folder) {
+    throw new Error("Failed to create folder in zip");
+  }
+  const tracks = data.tracks || [];
+  const totalTracks = tracks.length;
+  let downloadedTracks = 0;
+
+  for (const track of tracks) {
+    progress(downloadedTracks, totalTracks);
+    const res = await fetch(`${app_url}/stream/${track.videoId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    const contentLength = res.headers.get("Content-Length");
+    const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+    let receivedSize = 0;
+
+    const reader = res.body?.getReader();
+    const chunks: Uint8Array[] = [];
+
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        receivedSize += value.length;
+        const progress = totalSize ? (receivedSize / totalSize) * 100 : 0;
+        console.log(`Downloading: ${Math.round(progress)}%`);
+      }
+    }
+
+    const blob = new Blob(chunks, { type: "audio/mpeg" });
+    folder.file(`${track.title}.mp3`, blob);
+    downloadedTracks++;
+  }
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const url = window.URL.createObjectURL(zipBlob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = `${name}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
+export async function Download(id: string, name: string) {
+  const res = await fetch(`${app_url}/stream/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+
+  const contentLength = res.headers.get("Content-Length");
+  const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+  let receivedSize = 0;
+
+  const reader = res.body?.getReader();
+  const chunks: Uint8Array[] = [];
+
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      chunks.push(value);
+      receivedSize += value.length;
+
+      const progress = totalSize ? (receivedSize / totalSize) * 100 : 0;
+      // Update notification (you can customize this part)
+      console.log(`Downloading: ${Math.round(progress)}%`);
+    }
+  }
+
+  const blob = new Blob(chunks, { type: "audio/mpeg" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = `${name}.mp3`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 }
 
 export async function GetArtist(id: string): Promise<MainArtist> {
@@ -114,4 +233,19 @@ export async function Search(
     throw new Error(data.error);
   }
   return data as SearchItem[];
+}
+
+export async function GetLyrics(videoId: string): Promise<string> {
+  const res = await fetch(`${app_url}/lyrics/${videoId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(data.error);
+  }
+  return data as string;
 }

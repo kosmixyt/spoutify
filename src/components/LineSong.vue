@@ -49,7 +49,7 @@
 
     <!-- Teleport the context menu to the body to avoid positioning issues -->
     <Teleport to="body">
-        <div v-if="isContextMenuVisible" class="context-menu" :style="contextMenuStyle" @click.stop>
+        <div v-if="isContextMenuVisible" class="context-menu cursor-pointer" :style="contextMenuStyle" @click.stop>
             <div class="menu-item" @click="playSong">
                 <v-icon name="bi-play-fill" class="mr-2" />
                 Play
@@ -74,6 +74,12 @@
                 <v-icon name="bi-share" class="mr-2" />
                 Share
             </div>
+
+            <div class="menu-item" @click="download">
+                <v-icon name="bi-download" class="mr-2" />
+                Download
+            </div>
+
         </div>
     </Teleport>
 </template>
@@ -81,7 +87,7 @@
 import router from '@/router';
 import type { Album, SongResult, Track } from '@/type';
 import { playTrack, type PlayerServiceRequest } from '@/services/playerService';
-import { app_url } from '@/api';
+import { app_url, Download, getBestQualitythumbnail } from '@/api';
 
 // Create a global event bus for context menu management
 const CONTEXT_MENU_EVENT = 'context-menu-opened';
@@ -145,7 +151,7 @@ export default {
                 return this.forceThunm;
             }
             if (Array.isArray(this.songData.thumbnails) && this.songData.thumbnails.length > 0) {
-                return this.songData.thumbnails[0].url;
+                return getBestQualitythumbnail(this.songData.thumbnails).url;
             } else if (this.songData.thumbnails && typeof this.songData.thumbnails === 'string') {
                 return this.songData.thumbnails;
             } else {
@@ -251,6 +257,10 @@ export default {
                 router.push(`/album/${albumData.id}`);
             }
             this.hideContextMenu();
+        },
+        download() {
+            // document.location.href = `${app_url}/stream/${this.songData.videoId}`;
+            Download(this.songData.videoId, this.songData.title)
         },
         shareSong() {
             // Implement share functionality

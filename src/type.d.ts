@@ -157,3 +157,24 @@ export interface Track {
   duration: string;
   duration_seconds: number;
 }
+
+export type Home = HomeItem[];
+
+export interface HomeItem {
+  title: string;
+  contents: Content[];
+}
+
+export interface Content {
+  title: string;
+  videoId?: string;
+  artists?: Artist[];
+  thumbnails: Thumbnail[];
+  isExplicit?: boolean;
+  views?: string;
+  playlistId?: string;
+  description?: string;
+  type?: string;
+  browseId?: string;
+  audioPlaylistId?: string;
+}

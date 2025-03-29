@@ -23,7 +23,48 @@
       </div>
     </div>
   </div>
-  <div class="py-6 mb-28">
+
+  <!-- Artist description section - redesigned -->
+  <div class="px-10 xl:px-40 py-10">
+    <div class="flex flex-col md:flex-row gap-6 items-start">
+      <div class="w-full md:w-2/3">
+        <h2 class="text-white text-2xl font-bold mb-4 flex items-center">
+          <span class="mr-2">About</span>
+          <span class="h-px bg-gray-700 flex-grow ml-4 hidden md:block"></span>
+        </h2>
+        <div v-if="data.description" class="text-gray-300 leading-relaxed">
+          <div v-if="!showFullDescription && formattedDescription.length > 300">
+            <p v-html="truncatedDescription" class="mb-3"></p>
+            <button @click="showFullDescription = true"
+              class="text-green-500 hover:text-green-400 font-medium flex items-center transition-all">
+              Read more
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+          <div v-else>
+            <div v-html="formattedDescription" class="mb-3"></div>
+            <button v-if="formattedDescription.length > 300" @click="showFullDescription = false"
+              class="text-green-500 hover:text-green-400 font-medium flex items-center transition-all">
+              Show less
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p v-else class="text-gray-400 italic">No artist description available.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="border-b border-gray-800 mx-10 xl:mx-40"></div>
+
+  <div class="py-10 mb-28">
     <div class="w-full mx-auto">
       <h2 class="text-white text-xl font-bold mb-4">Most Streamed Songs</h2>
       <div>
@@ -83,6 +124,20 @@ export default {
     return {
       loading: true,
       data: {} as MainArtist,
+      showFullDescription: false
+    }
+  },
+  computed: {
+    formattedDescription() {
+      if (!this.data.description) return '';
+      return this.data.description
+        .replace(/\n/g, '<br>')
+        .replace(/\r/g, '')
+        .trim();
+    },
+    truncatedDescription() {
+      if (!this.formattedDescription) return '';
+      return this.formattedDescription.substring(0, 300) + '...';
     }
   },
   methods: {
@@ -110,3 +165,14 @@ export default {
   }
 };
 </script>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
