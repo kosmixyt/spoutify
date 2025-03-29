@@ -5,13 +5,20 @@ import { RouterLink, RouterView } from 'vue-router'
 <template>
   <div class="flex bg-gray-950">
     <div>
-      <div class="w-screen text-white h-12  flex z-50 fixed items-center justify-between">
-        <div class="ml-4">
-          <input v-model="searchData" v-on:input="search" type="text" placeholder="Search..."
-            class="text-white pl-3 rounded-lg h-8 bg-[#181818]" />
+      <div
+        class="w-screen text-white h-14 flex z-50 fixed items-center justify-between backdrop-blur-md bg-gray-950/80 shadow-md transition-all">
+        <div class="ml-6">
+          <div class="relative">
+            <v-icon name="fa-search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              scale="1" />
+            <input v-model="searchData" v-on:input="search" type="text" placeholder="Search..."
+              class="text-white pl-10 pr-4 py-2 rounded-full h-9 bg-[#2a2a2a] hover:bg-[#333333] focus:bg-[#333333] focus:outline-none focus:ring-1 focus:ring-green-500 transition-all w-64" />
+          </div>
         </div>
-        <div class="mr-4">
-          <v-icon name="fa-user-circle" class="color cursor-pointer" scale="1.8" />
+        <div class="mr-6">
+          <div class="bg-[#2a2a2a] hover:bg-[#333333] rounded-full p-1.5 cursor-pointer transition-all hover:scale-105">
+            <v-icon name="fa-user-circle" class="text-white" scale="1.5" />
+          </div>
         </div>
       </div>
       <div class="mt-[48px] w-60 hidden md:block  bg-gray-950 z-40 h-screen fixed">
@@ -23,7 +30,7 @@ import { RouterLink, RouterView } from 'vue-router'
         </div>
       </div>
     </div>
-    <div class="md:ml-[240px] md:w-[calc(100vw-240px)] mt-[48px] ml-0 w-screen px-2 md:px-0">
+    <div class="md:ml-[240px] md:w-[calc(100vw-240px)] mt-[56px] ml-0 w-screen px-2 md:px-0">
       <RouterView />
     </div>
   </div>
@@ -45,14 +52,12 @@ export default {
     //   }
     //   next()
     // })
-    console.log(this.$route.query.q)
     if (this.$route.query.q) {
       this.searchData = this.$route.query.q as string
     }
   },
   methods: {
     search() {
-      console.log(this.searchData)
       this.$router.push({ path: '/search', query: { q: this.searchData } })
     }
   },
