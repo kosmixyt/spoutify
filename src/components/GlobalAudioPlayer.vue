@@ -29,6 +29,13 @@
 
             <div class="playback-controls">
                 <div class="control-buttons">
+                    <button @click="toggleShuffle" class="control-btn" :class="{ 'active-control': isShuffleOn }">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path
+                                d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm0.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
+                        </svg>
+                    </button>
                     <button @click="previousTrack" class="control-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                             fill="currentColor">
@@ -49,6 +56,18 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                             fill="currentColor">
                             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                        </svg>
+                    </button>
+                    <button @click="toggleRepeat" class="control-btn"
+                        :class="{ 'active-control': repeatMode !== 'off' }">
+                        <svg v-if="repeatMode === 'one'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                            viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
                         </svg>
                     </button>
                 </div>
@@ -86,6 +105,21 @@
                         <path d="M9 13h6v2H9zM9 9h4v2H9zM9 17h6v2H9z" />
                     </svg>
                 </button>
+                <!-- Download button for desktop -->
+                <button @click="downloadTrack" class="download-btn" v-if="currentTrack">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    </svg>
+                </button>
+                <!-- Queue button for desktop -->
+                <button @click="toggleQueue" class="queue-btn" :class="{ 'active': showQueue }">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                            d="M3 18h6v-2H3v2zm0-5h12v-2H3v2zm0-7v2h18V6H3zm0 12h12v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -120,6 +154,39 @@
                     lectus.</p>
                 <p>Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Cras ultricies ligula sed
                     magna dictum porta.</p>
+            </div>
+        </div>
+
+        <!-- Queue panel for desktop -->
+        <div class="queue-panel" v-if="!isMobileView && showQueue">
+            <div class="queue-header">
+                <h3 class="text-violet-700 font-semibold">Queue</h3>
+                <div class="queue-controls">
+                    <button @click="toggleQueue" class="close-queue hover:text-violet-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="queue-content">
+                <ul class="queue-list">
+                    <li v-for="(track, index) in queue" :key="index"
+                        :class="{ 'active bg-violet-900/20': index === currentTrackIndex }"
+                        class="queue-item hover:bg-violet-800/20" @click="playTrackFromQueue(index)">
+                        <div class="queue-item-cover">
+                            <img :src="track.cover" alt="Cover" />
+                        </div>
+                        <div class="queue-item-details">
+                            <div class="queue-item-title text-violet-100">{{ track.title }}</div>
+                            <div class="queue-item-artist text-violet-300">{{track.Artists.map(a => a.name).join(', ')}}
+                            </div>
+                        </div>
+                        <div class="queue-item-duration text-violet-400">{{ formatTime(track.duration) }}</div>
+                    </li>
+                </ul>
             </div>
         </div>
 
@@ -221,15 +288,46 @@
                     </button>
                     <div class="now-playing">Now Playing</div>
                     <div class="menu-dots">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path
-                                d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                        </svg>
+                        <button @click="toggleMobileMenu" @touchstart.stop.prevent="toggleMobileMenu"
+                            class="menu-dots-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="currentColor">
+                                <path
+                                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                            </svg>
+                        </button>
+                        <!-- Mobile menu dropdown -->
+                        <div v-if="showMobileMenu" class="mobile-menu-dropdown">
+                            <div class="mobile-menu-item" @click="toggleLyrics" @touchstart.stop.prevent="toggleLyrics">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="currentColor">
+                                    <path
+                                        d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" />
+                                    <path d="M9 13h6v2H9zM9 9h4v2H9zM9 17h6v2H9z" />
+                                </svg>
+                                <span>Lyrics</span>
+                            </div>
+                            <div class="mobile-menu-item" @click="downloadTrack"
+                                @touchstart.stop.prevent="downloadTrack" v-if="currentTrack">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="currentColor">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                                </svg>
+                                <span>Télécharger</span>
+                            </div>
+                            <div class="mobile-menu-item" @click="toggleQueue" @touchstart.stop.prevent="toggleQueue">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="currentColor">
+                                    <path
+                                        d="M3 18h6v-2H3v2zm0-5h12v-2H3v2zm0-7v2h18V6H3zm0 12h12v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                                </svg>
+                                <span>Queue</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="full-cover-art" v-if="currentTrack" @click="openImageModal">
+                <div class="full-cover-art" v-if="currentTrack">
                     <img :src="currentTrack.cover" alt="Cover" />
                 </div>
 
@@ -253,7 +351,7 @@
                 </div>
 
                 <div class="full-player-controls">
-                    <button class="shuffle-btn">
+                    <button @click="toggleShuffle" class="shuffle-btn" :class="{ 'active-btn': isShuffleOn }">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="currentColor">
                             <path
@@ -282,15 +380,21 @@
                             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                         </svg>
                     </button>
-                    <button class="repeat-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    <button @click="toggleRepeat" class="repeat-btn" :class="{ 'active-btn': repeatMode !== 'off' }">
+                        <svg v-if="repeatMode === 'one'" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                            viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="currentColor">
                             <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
                         </svg>
                     </button>
                 </div>
 
-                <!-- Lyrics button for mobile -->
+                <!-- Remove or comment out these containers -->
+                <!-- 
                 <div class="mobile-lyrics-button-container">
                     <button @click="toggleLyrics" class="mobile-lyrics-btn" :class="{ 'active': showLyrics }">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -303,11 +407,24 @@
                     </button>
                 </div>
 
+                <div class="mobile-queue-button-container">
+                    <button @click="toggleQueue" class="mobile-queue-btn" :class="{ 'active': showQueue }">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path
+                                d="M3 18h6v-2H3v2zm0-5h12v-2H3v2zm0-7v2h18V6H3zm0 12h12v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                        </svg>
+                        Queue
+                    </button>
+                </div>
+                -->
+
                 <!-- Mobile lyrics panel -->
                 <div class="mobile-lyrics-panel" v-if="showLyrics">
                     <div class="mobile-lyrics-header">
                         <h3>Lyrics</h3>
-                        <button @click="toggleLyrics" class="close-mobile-lyrics">
+                        <button @click="toggleLyrics" @touchstart.stop.prevent="toggleLyrics"
+                            class="close-mobile-lyrics">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="currentColor">
                                 <path
@@ -334,11 +451,45 @@
                         <p v-else>No lyrics available for this track.</p>
                     </div>
                 </div>
+
+                <!-- Mobile queue panel -->
+                <div class="mobile-queue-panel" v-if="showQueue">
+                    <div class="mobile-queue-header">
+                        <h3>Queue</h3>
+                        <button @click="toggleQueue" @touchstart.stop.prevent="toggleQueue" class="close-mobile-queue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="currentColor">
+                                <path
+                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Mobile queue content -->
+                    <div class="mobile-queue-content">
+                        <ul class="mobile-queue-list">
+                            <li v-for="(track, index) in queue" :key="index"
+                                :class="{ 'active': index === currentTrackIndex }" class="mobile-queue-item"
+                                @click="playTrackFromQueue(index)">
+                                <div class="mobile-queue-item-cover">
+                                    <img :src="track.cover" alt="Cover" />
+                                </div>
+                                <div class="mobile-queue-item-details">
+                                    <div class="mobile-queue-item-title">{{ track.title }}</div>
+                                    <div class="mobile-queue-item-artist">{{track.Artists.map(a => a.name).join(', ')
+                                        }}
+                                    </div>
+                                </div>
+                                <div class="mobile-queue-item-duration">{{ formatTime(track.duration) }}</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Image Modal for full-size cover art -->
-        <div class="image-modal" v-if="showImageModal || imageModalTransitioning" @click="closeImageModal"
+        <div class="image-modal" v-if="showImageModal || imageModalTransitioning" @click.self="closeImageModal"
             :class="{ 'modal-entering': imageModalEntering, 'modal-exiting': imageModalExiting }">
             <div class="image-modal-content" @click.stop :style="imageModalStyle">
                 <button class="close-modal-btn" @click="closeImageModal">
@@ -355,9 +506,11 @@
 </template>
 
 <script lang="ts">
-import { app_url, token } from '@/api';
+import { app_url, token, Download } from '@/api';
 import type { PlayerServiceRequest } from '@/services/playerService';
 import { defineComponent } from 'vue';
+import { MediaSession } from '@jofr/capacitor-media-session';
+import { Capacitor } from '@capacitor/core';
 
 export default defineComponent({
     name: 'GlobalAudioPlayer',
@@ -393,6 +546,20 @@ export default defineComponent({
             imageClickPosition: { x: 0, y: 0 },
             modalImageRect: { top: 0, left: 0, width: 0, height: 0 },
             targetImageRect: { top: 0, left: 0, width: 0, height: 0 },
+            // Queue state
+            showQueue: false,
+            queue: [] as PlayerServiceRequest[],
+            queueHistory: [] as PlayerServiceRequest[], // Tracks we've already played
+            // Add this new property for mobile menu
+            showMobileMenu: false,
+            modalOpenTime: 0, // Timestamp when modal was opened
+            // Add new properties for shuffle and repeat
+            isShuffleOn: false,
+            repeatMode: 'off', // Can be 'off', 'all', or 'one'
+            originalQueue: [] as PlayerServiceRequest[], // To store original queue order for shuffle
+            // Capacitor MediaSession
+            playbackStopped: true,
+            isCapacitor: Capacitor.isNativePlatform(),
         };
     },
     computed: {
@@ -457,26 +624,61 @@ export default defineComponent({
         // Register this component to receive play requests
         window.addEventListener('play-track', this.handlePlayRequest as EventListener);
 
+        // Register to receive add-to-queue events
+        window.addEventListener('add-to-queue', this.handleAddToQueue as EventListener);
+
         // Check for mobile view
         this.checkMobileView();
         window.addEventListener('resize', this.checkMobileView);
 
-        // Initialize Media Session API if supported
-        if ('mediaSession' in navigator) {
+        // Initialize media session
+        if (this.isCapacitor) {
+            this.setupCapacitorMediaSession();
+        } else if ('mediaSession' in navigator) {
             this.setupMediaSession();
         }
+
+        // Load saved queue from local storage
+        this.loadQueueFromStorage();
+
+        this.audio.addEventListener('play', () => {
+            this.isPlaying = true; // Synchronize isPlaying state
+        });
+
+        this.audio.addEventListener('pause', () => {
+            this.isPlaying = false; // Synchronize isPlaying state
+        });
     },
 
     beforeUnmount() {
         // Clean up event listener
         window.removeEventListener('play-track', this.handlePlayRequest as EventListener);
+        window.removeEventListener('add-to-queue', this.handleAddToQueue as EventListener);
         window.removeEventListener('resize', this.checkMobileView);
+
+        // Save queue to local storage
+        this.saveQueueToStorage();
     },
     methods: {
         playTrack(track: PlayerServiceRequest) {
             this.currentTime = 0;
             this.duration = 0;
-            this.audio.src = `${app_url}/stream/${track.videoId}`
+
+            if (track.isOfflineTrack && track.audioBuffer) {
+                // Handle offline tracks with buffer data
+                const blob = this.base64ToBlob(track.audioBuffer, 'audio/mp3');
+                const audioUrl = URL.createObjectURL(blob);
+                this.audio.src = audioUrl;
+
+                // Clean up the URL when we're done with it
+                this.audio.onload = () => {
+                    URL.revokeObjectURL(audioUrl);
+                };
+            } else {
+                // Handle online tracks as before
+                this.audio.src = `${app_url}/stream/${track.videoId}`;
+            }
+
             this.audio.load();
             this.currentTrack = track;
             this.audio.play();
@@ -487,56 +689,272 @@ export default defineComponent({
             this.lyricsError = null;
 
             // If lyrics are showing, fetch new lyrics for the new track
-            if (this.showLyrics) {
+            if (this.showLyrics && track.videoId) {
                 this.fetchLyrics();
             }
 
             // Update Media Session metadata when a new track plays
-            if ('mediaSession' in navigator) {
+            if (this.isCapacitor) {
+                this.updateCapacitorMetadata();
+            } else if ('mediaSession' in navigator) {
                 this.updateMediaSessionMetadata();
             }
+
+            // Save queue to local storage
+            this.saveQueueToStorage();
         },
+
+        // Add helper method to convert base64 to Blob
+        base64ToBlob(base64: string, type: string): Blob {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+
+            return new Blob(byteArrays, { type });
+        },
+
+        // ...existing code...
+
+        handlePlayRequest(event: CustomEvent) {
+            const track = event.detail;
+
+            // If there's already a track playing, add it to history
+            if (this.currentTrack) {
+                this.queueHistory.push(this.currentTrack);
+            }
+
+            // Clear the queue if requested
+            if (event.detail.clearQueue) {
+                this.queue = [];
+            }
+
+            // If the playlist property is provided, replace the queue
+            if (event.detail.playlist && Array.isArray(event.detail.playlist)) {
+                // First track will be played, rest go to queue
+                const [firstTrack, ...remainingTracks] = event.detail.playlist;
+                this.queue = remainingTracks;
+                this.playTrack(firstTrack);
+            } else {
+                // Play the requested track immediately
+                this.currentTrack = track;
+                this.playTrack(track);
+            }
+        },
+
+        // ...existing code...
+
+        // Add a track to queue without playing it
+        addToQueue(track: PlayerServiceRequest) {
+            this.queue.push(track);
+            this.saveQueueToStorage();
+
+            // If this is the only track and nothing is playing, play it
+            if (this.queue.length === 1 && !this.currentTrack) {
+                this.playTrackFromQueue(0);
+            }
+        },
+
+        clearQueue() {
+            this.queue = [];
+            this.queueHistory = [];
+            this.saveQueueToStorage();
+        },
+
         togglePlay() {
             if (this.isPlaying) {
                 this.audio.pause();
                 // Update Media Session playback state
-                if ('mediaSession' in navigator) {
+                if (this.isCapacitor) {
+                    this.playbackStopped = false;
+                    this.updateCapacitorPlaybackState();
+                } else if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = 'paused';
                 }
             } else {
                 this.audio.play();
                 // Update Media Session playback state
-                if ('mediaSession' in navigator) {
+                if (this.isCapacitor) {
+                    this.playbackStopped = false;
+                    this.updateCapacitorPlaybackState();
+                } else if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = 'playing';
                 }
             }
             this.isPlaying = !this.isPlaying;
         },
+
         seek(event: Event) {
             const target = event.target as HTMLInputElement;
             this.audio.currentTime = parseFloat(target.value);
         },
+
         formatTime(time: number) {
             const minutes = Math.floor(time / 60);
             const seconds = Math.floor(time % 60).toString().padStart(2, '0');
             return `${minutes}:${seconds}`;
         },
+
         changeVolume(event: Event) {
             const target = event.target as HTMLInputElement;
             this.audio.volume = parseFloat(target.value);
         },
+
         previousTrack() {
+            // If we're more than 3 seconds into a song, restart it instead of going back
+            if (this.currentTime > 3) {
+                this.audio.currentTime = 0;
+                return;
+            }
 
+            // Check if we have previous tracks in history
+            if (this.queueHistory.length > 0) {
+                // Get the last track from history
+                const previousTrack = this.queueHistory.pop();
+                if (previousTrack) {
+                    // Add current track back to the front of the queue if it exists
+                    if (this.currentTrack) {
+                        this.queue.unshift(this.currentTrack);
+                    }
+
+                    // Play the previous track
+                    this.currentTrack = previousTrack;
+                    this.playTrack(previousTrack);
+                }
+            }
         },
+
         nextTrack() {
+            if (this.repeatMode === 'one' && this.currentTrack) {
+                // If repeat one is enabled, just restart the current track
+                this.audio.currentTime = 0;
+                this.audio.play();
+                return;
+            }
+
+            // If there are tracks in the queue
+            if (this.queue.length > 0) {
+                // Add current track to history if it exists
+                if (this.currentTrack) {
+                    this.queueHistory.push(this.currentTrack);
+                }
+
+                // Get the next track from the queue
+                const nextTrack = this.queue.shift();
+                if (nextTrack) {
+                    this.currentTrack = nextTrack;
+                    this.playTrack(nextTrack);
+                }
+            } else if (this.repeatMode === 'all' && this.currentTrack) {
+                // If queue is empty but repeat all is on, restore queue from history + current track
+                if (this.queueHistory.length > 0) {
+                    this.queue = [...this.queueHistory];
+                    this.queueHistory = [];
+                }
+
+                // Put current track at end of queue
+                this.queue.push(this.currentTrack);
+
+                // Then get the next track
+                const nextTrack = this.queue.shift();
+                if (nextTrack) {
+                    this.currentTrack = nextTrack;
+                    this.playTrack(nextTrack);
+                }
+
+                // Reshuffle if shuffle is on
+                if (this.isShuffleOn) {
+                    this.originalQueue = [...this.queue];
+                    for (let i = this.queue.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
+                    }
+                }
+            } else {
+                // No more tracks to play and repeat all is off
+                this.audio.pause();
+                this.isPlaying = false;
+            }
         },
 
-        handlePlayRequest(event: CustomEvent) {
+        playTrackFromQueue(index: number) {
+            if (index >= 0 && index < this.queue.length) {
+                // Add current track to history if it exists
+                if (this.currentTrack) {
+                    this.queueHistory.push(this.currentTrack);
+                }
 
-            const track = event.detail;
+                // Get the selected track
+                const selectedTrack = this.queue[index];
 
-            this.playTrack(track)
+                // Remove it from the queue
+                this.queue.splice(index, 1);
+
+                // Play it
+                this.currentTrack = selectedTrack;
+                this.playTrack(selectedTrack);
+            }
         },
+
+        // Store queue in local storage
+        saveQueueToStorage() {
+            try {
+                const queueData = {
+                    currentTrack: this.currentTrack,
+                    queue: this.queue,
+                    queueHistory: this.queueHistory,
+                    isShuffleOn: this.isShuffleOn,
+                    repeatMode: this.repeatMode,
+                    originalQueue: this.originalQueue
+                };
+                localStorage.setItem('spoutify-queue', JSON.stringify(queueData));
+            } catch (error) {
+                console.error('Failed to save queue to local storage:', error);
+            }
+        },
+
+        // Load queue from local storage
+        loadQueueFromStorage() {
+            try {
+                const savedQueue = localStorage.getItem('spoutify-queue');
+                if (savedQueue) {
+                    const queueData = JSON.parse(savedQueue);
+                    this.currentTrack = queueData.currentTrack;
+                    this.queue = queueData.queue || [];
+                    this.queueHistory = queueData.queueHistory || [];
+                    this.isShuffleOn = queueData.isShuffleOn || false;
+                    this.repeatMode = queueData.repeatMode || 'off';
+                    this.originalQueue = queueData.originalQueue || [];
+
+                    // If there was a current track, prepare it but don't autoplay
+                    if (this.currentTrack && this.currentTrack.videoId) {
+                        this.audio.src = `${app_url}/stream/${this.currentTrack.videoId}`;
+                        this.audio.load();
+                    }
+                }
+
+                // Fall back to separate storage for repeat mode if needed
+                if (!savedQueue) {
+                    const savedRepeatMode = localStorage.getItem('spoutify-repeat-mode');
+                    if (savedRepeatMode) {
+                        this.repeatMode = savedRepeatMode;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load queue from local storage:', error);
+            }
+        },
+
         // Mobile player methods
         checkMobileView() {
             this.isMobileView = window.innerWidth < 768;
@@ -546,6 +964,7 @@ export default defineComponent({
         },
         expandPlayer() {
             this.expandedPlayer = true;
+            document.body.style.overflow = 'hidden'; // Disable scrolling
             document.body.classList.add('player-expanded');
             // Add animation class
             setTimeout(() => {
@@ -554,7 +973,10 @@ export default defineComponent({
         },
 
         // New method to animate expanding the player
-        animateToFullPlayer() {
+        animateToFullPlayer(event) {
+            // Stop event propagation to prevent other click handlers
+            if (event) event.stopPropagation();
+
             // Start the animation
             this.isTransitioning = true;
             this.touchDeltaY = 0;
@@ -607,7 +1029,10 @@ export default defineComponent({
 
         collapsePlayer() {
             this.expandedPlayer = false;
+            document.body.style.overflow = ''; // Re-enable scrolling
             document.body.classList.remove('player-expanded');
+            // Close mobile menu if open
+            this.showMobileMenu = false;
             // Add animation class
             setTimeout(() => {
                 this.isTransitioning = false;
@@ -616,6 +1041,14 @@ export default defineComponent({
 
         // Touch event handlers for swipe
         handleTouchStart(event: TouchEvent) {
+            // Ignorer si l'événement provient d'un élément du menu
+            if (event.target.closest('.mobile-menu-dropdown') ||
+                event.target.closest('.menu-dots-btn') ||
+                event.target.closest('.mobile-lyrics-panel') ||
+                event.target.closest('.mobile-queue-panel')) {
+                return;
+            }
+
             if (event.touches.length === 1) {
                 this.isTransitioning = true;
                 this.touchStartY = event.touches[0].clientY;
@@ -647,6 +1080,9 @@ export default defineComponent({
 
         handleTouchEnd() {
             if (!this.isTransitioning) return;
+
+            // Make sure to close the mobile menu when interacting with the player
+            this.showMobileMenu = false;
 
             // Reduce the threshold to make it easier to trigger the action
             const adjustedThreshold = this.swipeThreshold * 0.8;
@@ -712,7 +1148,15 @@ export default defineComponent({
             }
         },
 
-        toggleLyrics() {
+        toggleLyrics(event) {
+            console.log('Toggling lyrics panel');
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            this.showMobileMenu = false; // Close menu
+            this.showQueue = false; // Close queue panel if open
+
             if (!this.isMobileView) {
                 // On desktop, directly toggle full lyrics view
                 this.showLyrics = !this.showLyrics;
@@ -723,9 +1167,9 @@ export default defineComponent({
                     this.fetchLyrics();
                 }
             } else {
+                console.log('Mobile view detected, toggling lyrics panel');
                 // On mobile, just toggle lyrics panel without affecting full view
                 this.showLyrics = !this.showLyrics;
-
                 // Fetch lyrics when opening the lyrics panel
                 if (this.showLyrics) {
                     this.fetchLyrics();
@@ -763,13 +1207,15 @@ export default defineComponent({
             // Set action handlers for media keys
             navigator.mediaSession.setActionHandler('play', () => {
                 if (!this.isPlaying) {
-                    this.togglePlay();
+                    this.audio.play(); // Ensure audio plays
+                    this.isPlaying = true; // Synchronize state
                 }
             });
 
             navigator.mediaSession.setActionHandler('pause', () => {
                 if (this.isPlaying) {
-                    this.togglePlay();
+                    this.audio.pause(); // Ensure audio pauses
+                    this.isPlaying = false; // Synchronize state
                 }
             });
 
@@ -834,6 +1280,11 @@ export default defineComponent({
         openImageModal(event) {
             if (!this.currentTrack?.cover) return;
 
+            // Prevent event bubbling
+            if (event) {
+                event.stopPropagation();
+            }
+
             // Store the source image element
             const sourceImage = event.target;
             const sourceRect = sourceImage.getBoundingClientRect();
@@ -856,6 +1307,7 @@ export default defineComponent({
             this.imageModalExiting = false;
             this.imageModalEntering = true;
             this.showImageModal = true;
+            this.modalOpenTime = Date.now(); // Record when modal was opened
             document.body.style.overflow = 'hidden'; // Prevent scrolling
 
             // Get modal image dimensions after rendering
@@ -879,7 +1331,14 @@ export default defineComponent({
             }, 50);
         },
 
-        closeImageModal() {
+        closeImageModal(event) {
+            // Prevent accidental closing by adding a delay check
+            if (Date.now() - this.modalOpenTime < 500) {
+                // If less than 500ms since opening, ignore the close event
+                return;
+            }
+
+            // Only proceed with closing if it's a deliberate action
             // Start exit animation
             this.imageModalTransitioning = true;
             this.imageModalEntering = false;
@@ -893,6 +1352,221 @@ export default defineComponent({
                 document.body.style.overflow = ''; // Restore scrolling
             }, 300);
         },
+
+        toggleMobileMenu(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            // Fermer les autres panneaux ouverts
+            this.showLyrics = false;
+            this.showQueue = false;
+            this.showMobileMenu = !this.showMobileMenu;
+        },
+
+        // Queue methods
+        toggleQueue(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            this.showMobileMenu = false; // Close menu
+            this.showLyrics = false; // Close lyrics panel if open
+            this.showQueue = !this.showQueue;
+        },
+        handleAddToQueue(event: CustomEvent) {
+            const track = event.detail as PlayerServiceRequest;
+            this.addToQueue(track);
+
+            // Show the queue briefly when adding tracks
+            if (!this.showQueue) {
+                this.showQueue = true;
+
+                // Auto-hide the queue after a delay (optional)
+                setTimeout(() => {
+                    if (!this.isMobileView) {
+                        this.showQueue = false;
+                    }
+                }, 4000);
+            }
+        },
+
+        // Add new methods for shuffle and repeat functionality
+        toggleShuffle() {
+            this.isShuffleOn = !this.isShuffleOn;
+
+            if (this.isShuffleOn) {
+                // Save the original queue order
+                this.originalQueue = [...this.queue];
+
+                // Shuffle the queue using Fisher-Yates algorithm
+                for (let i = this.queue.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
+                }
+
+                // Show notification (optional)
+                this.showNotification('Shuffle mode enabled');
+            } else {
+                // Restore original queue order if we saved it
+                if (this.originalQueue.length > 0) {
+                    this.queue = [...this.originalQueue];
+                    this.originalQueue = [];
+                }
+
+                // Show notification (optional)
+                this.showNotification('Shuffle mode disabled');
+            }
+
+            // Save queue to local storage
+            this.saveQueueToStorage();
+        },
+
+        toggleRepeat() {
+            // Cycle through repeat modes: off -> all -> one -> off
+            if (this.repeatMode === 'off') {
+                this.repeatMode = 'all';
+                this.showNotification('Repeat all');
+            } else if (this.repeatMode === 'all') {
+                this.repeatMode = 'one';
+                this.showNotification('Repeat one');
+            } else {
+                this.repeatMode = 'off';
+                this.showNotification('Repeat off');
+            }
+
+            // Save preference to local storage
+            localStorage.setItem('spoutify-repeat-mode', this.repeatMode);
+        },
+
+        showNotification(message: string) {
+            // Simple notification function (you can enhance this)
+            console.log(message);
+            // You could implement a UI toast notification here
+        },
+
+        // Add download functionality
+        downloadTrack() {
+            if (!this.currentTrack) return;
+
+            // Close the mobile menu if open
+            this.showMobileMenu = false;
+
+            // Show notification
+            this.showNotification('Démarrage du téléchargement...');
+
+            // Call the Download function from the API
+            Download(
+                this.currentTrack.videoId,
+                this.currentTrack.title,
+                this.currentTrack.cover
+            );
+        },
+
+        // Setup Capacitor MediaSession
+        setupCapacitorMediaSession() {
+            // Setup event listeners for updating position and playback state
+            this.audio.addEventListener('durationchange', this.updatePositionState);
+            this.audio.addEventListener('seeked', this.updatePositionState);
+            this.audio.addEventListener('ratechange', this.updatePositionState);
+            this.audio.addEventListener('play', this.updatePositionState);
+            this.audio.addEventListener('pause', this.updatePositionState);
+
+            this.audio.addEventListener('play', () => {
+                this.playbackStopped = false;
+                this.updateCapacitorPlaybackState();
+                this.updateCapacitorMetadata();
+            });
+
+            this.audio.addEventListener('pause', this.updateCapacitorPlaybackState);
+
+            // Setup action handlers
+            this.setupCapacitorActionHandlers();
+        },
+
+        updatePositionState() {
+            if (!this.isCapacitor) return;
+
+            MediaSession.setPositionState({
+                position: this.audio.currentTime,
+                duration: this.audio.duration,
+                playbackRate: this.audio.playbackRate
+            });
+        },
+
+        updateCapacitorPlaybackState() {
+            if (!this.isCapacitor) return;
+
+            const playbackState = this.playbackStopped ? 'none' : (this.audio.paused ? 'paused' : 'playing');
+            MediaSession.setPlaybackState({
+                playbackState: playbackState
+            });
+        },
+
+        updateCapacitorMetadata() {
+            if (!this.isCapacitor || !this.currentTrack) return;
+
+            const artwork = [];
+            if (this.currentTrack.cover) {
+                artwork.push({
+                    src: this.currentTrack.cover,
+                    type: 'image/jpeg',
+                    sizes: '512x512'
+                });
+            }
+
+            MediaSession.setMetadata({
+                title: this.currentTrack.title || 'Unknown Title',
+                artist: this.currentTrack.Artists?.map(a => a.name).join(', ') || 'Unknown Artist',
+                album: this.currentTrack.Album?.name || '',
+                artwork: artwork
+            });
+        },
+
+        setupCapacitorActionHandlers() {
+            if (!this.isCapacitor) return;
+
+            MediaSession.setActionHandler({ action: 'play' }, () => {
+                this.audio.play();
+            });
+
+            MediaSession.setActionHandler({ action: 'pause' }, () => {
+                this.audio.pause();
+            });
+
+            MediaSession.setActionHandler({ action: 'seekto' }, (details) => {
+                if (details.seekTime !== undefined) {
+                    this.audio.currentTime = details.seekTime;
+                }
+            });
+
+            MediaSession.setActionHandler({ action: 'seekforward' }, (details) => {
+                const seekOffset = details.seekOffset ?? 30;
+                this.audio.currentTime = Math.min(this.audio.currentTime + seekOffset, this.audio.duration);
+            });
+
+            MediaSession.setActionHandler({ action: 'seekbackward' }, (details) => {
+                const seekOffset = details.seekOffset ?? 30;
+                this.audio.currentTime = Math.max(this.audio.currentTime - seekOffset, 0);
+            });
+
+            MediaSession.setActionHandler({ action: 'nexttrack' }, () => {
+                this.nextTrack();
+            });
+
+            MediaSession.setActionHandler({ action: 'previoustrack' }, () => {
+                this.previousTrack();
+            });
+
+            MediaSession.setActionHandler({ action: 'stop' }, () => {
+                this.playbackStopped = true;
+                this.audio.pause();
+                this.audio.currentTime = 0;
+            });
+        },
+    },
+    watch: {
+
     }
 })
 </script>
@@ -904,7 +1578,7 @@ export default defineComponent({
     bottom: 0;
     left: 0;
     width: 100%;
-    background: linear-gradient(to right, #121212, #1A1A1A, #121212);
+    background: linear-gradient(to right, #0c0414, #180a29, #0c0414);
     color: #ffffff;
     z-index: 50;
 }
@@ -1039,7 +1713,7 @@ export default defineComponent({
 }
 
 .play-btn {
-    background: #6C63FF;
+    background: #9370db;
     border: none;
     color: #ffffff;
     cursor: pointer;
@@ -1050,11 +1724,11 @@ export default defineComponent({
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(108, 99, 255, 0.5);
+    box-shadow: 0 2px 8px rgba(147, 112, 219, 0.5);
 }
 
 .play-btn:hover {
-    background: #7B74FF;
+    background: #a080ea;
     transform: scale(1.05);
 }
 
@@ -1098,7 +1772,7 @@ export default defineComponent({
     top: 0;
     left: 0;
     height: 100%;
-    background-color: #6C63FF;
+    background-color: #9370db;
     border-radius: 2px;
     pointer-events: none;
 }
@@ -1139,7 +1813,7 @@ export default defineComponent({
     top: 0;
     left: 0;
     height: 100%;
-    background-color: #6C63FF;
+    background-color: #9370db;
     border-radius: 2px;
     pointer-events: none;
 }
@@ -1159,16 +1833,16 @@ export default defineComponent({
     appearance: none;
     width: 12px;
     height: 12px;
-    background: #6C63FF;
+    background: #9370db;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 5px rgba(108, 99, 255, 0.7);
+    box-shadow: 0 0 5px rgba(147, 112, 219, 0.7);
     opacity: 1;
 }
 
 .progress-bar-wrapper:hover .progress-bar-fill,
 .volume-slider-wrapper:hover .volume-slider-fill {
-    background-color: #7B74FF;
+    background-color: #b19cd9;
 }
 
 /* Ensure the thumb is visible when hovering */
@@ -1298,50 +1972,346 @@ export default defineComponent({
     }
 }
 
-/* Spotify Mobile Player Styles */
-.spotify-mobile-player {
-    width: 100%;
-    touch-action: pan-x;
-    /* Allow horizontal scrolling but capture vertical */
-    /* Prevent browser's default touch actions */
-}
-
-/* Mini Player Styles */
-.mini-player {
-    position: relative;
+/* Queue/Playlist Styles */
+.queue-panel {
+    position: fixed;
+    right: 0;
+    bottom: 90px;
+    width: 350px;
+    max-height: 500px;
+    background: linear-gradient(to bottom, #180a29, #0c0414);
+    border-radius: 8px 0 0 0;
+    box-shadow: -2px -2px 15px rgba(0, 0, 0, 0.5);
+    z-index: 49;
+    animation: slideLeft 0.3s ease;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    background: #1A1A1A;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-    z-index: 50;
-    transform: translateY(0);
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    will-change: transform, opacity;
+    border: 1px solid rgba(147, 112, 219, 0.3);
 }
 
-/* Full Screen Player Styles */
-.full-player {
-    position: fixed;
+.queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(147, 112, 219, 0.2);
+    background: rgba(26, 15, 41, 0.8);
+}
+
+.queue-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #9370db;
+    font-weight: 600;
+}
+
+.queue-controls {
+    display: flex;
+    align-items: center;
+}
+
+.close-queue {
+    background: transparent;
+    border: none;
+    color: #B3B3B3;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.close-queue:hover {
+    color: #ffffff;
+    background: rgba(147, 112, 219, 0.2);
+    transform: scale(1.1);
+}
+
+.queue-content {
+    padding: 12px;
+    height: 450px;
+    overflow-y: auto;
+    color: #B3B3B3;
+}
+
+.queue-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.queue-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.queue-content::-webkit-scrollbar-thumb {
+    background: rgba(147, 112, 219, 0.4);
+    border-radius: 4px;
+}
+
+.queue-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 112, 219, 0.6);
+}
+
+.queue-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.queue-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin-bottom: 6px;
+}
+
+.queue-item:hover {
+    background-color: rgba(147, 112, 219, 0.15);
+    transform: translateX(2px);
+}
+
+.queue-item.active {
+    background-color: rgba(147, 112, 219, 0.25);
+    border-left: 3px solid #9370db;
+}
+
+.queue-item-cover {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.queue-item-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.queue-item:hover .queue-item-cover img {
+    transform: scale(1.05);
+}
+
+.queue-item-details {
+    flex: 1;
+    overflow: hidden;
+}
+
+.queue-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+    transition: color 0.2s ease;
+}
+
+.queue-item:hover .queue-item-title {
+    color: #b19cd9;
+}
+
+.queue-item-artist {
+    font-size: 12px;
+    color: #B3B3B3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+.queue-item:hover .queue-item-artist {
+    color: #d1c4e9;
+}
+
+.queue-item-duration {
+    font-size: 12px;
+    color: #9370db;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+@keyframes slideLeft {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile queue styles */
+.mobile-queue-panel {
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(145deg, #1a1a1a 0%, #121212 100%);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
+    background: linear-gradient(145deg, #0c0414 0%, #180a29 100%);
+    z-index: 101;
     padding: 32px 24px;
-    transform: translateY(0);
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    will-change: transform, opacity;
-    overscroll-behavior: contain;
+    animation: fadeIn 0.3s ease;
+    overflow-y: auto;
 }
 
-/* Ajouter ces nouvelles classes CSS pour des transitions plus fluides */
-.player-expanded .mini-player {
-    opacity: 0;
-    pointer-events: none;
+.mobile-queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.mobile-queue-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.close-mobile-queue {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.mobile-queue-content {
+    padding-bottom: 40px;
+}
+
+.mobile-queue-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mobile-queue-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-queue-item.active {
+    background-color: rgba(147, 112, 219, 0.15);
+    border-radius: 8px;
+    padding: 12px 8px;
+    margin: 0 -8px;
+}
+
+.mobile-queue-item-cover {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.mobile-queue-item-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mobile-queue-item-details {
+    flex: 1;
+    overflow: hidden;
+}
+
+.mobile-queue-item-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-queue-item-artist {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-queue-item-duration {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-left: 16px;
+    flex-shrink: 0;
+}
+
+.queue-btn {
+    background: transparent;
+    border: none;
+    color: #B3B3B3;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+}
+
+.queue-btn:hover,
+.queue-btn.active {
+    color: #6C63FF;
+}
+
+.mobile-queue-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.mobile-queue-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #B3B3B3;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-queue-btn svg {
+    margin-right: 4px;
+}
+
+.mobile-queue-btn:hover,
+.mobile-queue-btn.active {
+    background: rgba(147, 112, 219, 0.2);
+    color: #fff;
+}
+
+/* Spotify Mobile Player Styles */
+.spotify-mobile-player {
+    touch-action: pan-x;
+    width: 100%;
+    /* Allow horizontal scrolling but capture vertical */
+    /* Prevent browser's default touch actions */
 }
 
 /* Mini Player Styles */
@@ -1438,7 +2408,7 @@ export default defineComponent({
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(145deg, #1a1a1a 0%, #121212 100%);
+    background: linear-gradient(145deg, #0c0414 0%, #180a29 100%);
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -1488,7 +2458,7 @@ export default defineComponent({
     max-width: 320px;
     margin: 0 auto 32px;
     aspect-ratio: 1;
-    box-shadow: 0 20px 40px rgba(108, 99, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(147, 112, 219, 0.2);
     border-radius: 12px;
     position: relative;
     overflow: hidden;
@@ -1509,7 +2479,7 @@ export default defineComponent({
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(180deg, rgba(108, 99, 255, 0.1) 0%, rgba(26, 26, 26, 0) 100%);
+    background: linear-gradient(180deg, rgba(147, 112, 219, 0.1) 0%, rgba(26, 26, 26, 0) 100%);
     pointer-events: none;
 }
 
@@ -1597,7 +2567,7 @@ export default defineComponent({
 }
 
 .full-play-btn {
-    background: #6C63FF;
+    background: #9370db;
     border: none;
     color: #fff;
     width: 72px;
@@ -1606,7 +2576,7 @@ export default defineComponent({
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 32px rgba(108, 99, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(147, 112, 219, 0.4);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
@@ -1627,8 +2597,8 @@ export default defineComponent({
 
 .full-play-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 12px 36px rgba(108, 99, 255, 0.5);
-    background: #7B74FF;
+    box-shadow: 0 12px 36px rgba(147, 112, 219, 0.5);
+    background: #a080ea;
 }
 
 .full-play-btn:active {
@@ -1747,34 +2717,8 @@ export default defineComponent({
 
 /* Mobile lyrics styles */
 .mobile-lyrics-button-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 32px;
-}
-
-.mobile-lyrics-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #B3B3B3;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.mobile-lyrics-btn svg {
-    margin-right: 4px;
-}
-
-.mobile-lyrics-btn:hover,
-.mobile-lyrics-btn.active {
-    background: rgba(108, 99, 255, 0.2);
-    color: #fff;
+    display: none;
+    /* Hide the original buttons */
 }
 
 .mobile-lyrics-panel {
@@ -1783,7 +2727,7 @@ export default defineComponent({
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(145deg, #1a1a1a 0%, #121212 100%);
+    background: linear-gradient(145deg, #0c0414 0%, #180a29 100%);
     z-index: 101;
     padding: 32px 24px;
     animation: fadeIn 0.3s ease;
@@ -1861,7 +2805,7 @@ export default defineComponent({
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 50%, #121212 100%);
+    background: linear-gradient(135deg, #1a0d2c 0%, #0c0414 50%, #0a0310 100%);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -1965,7 +2909,7 @@ export default defineComponent({
 
 .desktop-full-lyrics-content h3 {
     font-size: 22px;
-    color: #6C63FF;
+    color: #9370db;
     margin-bottom: 24px;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -2049,9 +2993,9 @@ export default defineComponent({
 .spinner {
     width: 50px;
     height: 50px;
-    border: 3px solid rgba(108, 99, 255, 0.3);
+    border: 3px solid rgba(147, 112, 219, 0.3);
     border-radius: 50%;
-    border-top-color: #6C63FF;
+    border-top-color: #9370db;
     animation: spin 1s ease-in-out infinite;
     margin-bottom: 16px;
 }
@@ -2185,5 +3129,125 @@ export default defineComponent({
     transform: scale(1.1);
 }
 
-/* ...existing code... */
+/* Add new mobile menu dropdown styles */
+.menu-dots {
+    position: relative;
+}
+
+.menu-dots-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    /* Supprimer la surbrillance sur appui mobile */
+    touch-action: manipulation;
+    /* Améliorer la gestion des interactions tactiles */
+    user-select: none;
+    /* Empêcher la sélection de texte involontaire */
+}
+
+.mobile-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 160px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: 110;
+    overflow: hidden;
+    margin-top: 8px;
+    animation: fadeInDown 0.2s ease forwards;
+    touch-action: manipulation;
+    /* Améliorer la gestion des interactions tactiles */
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    /* Supprimer la surbrillance sur appui mobile */
+    touch-action: manipulation;
+    /* Améliorer la gestion des interactions tactiles */
+    user-select: none;
+    /* Empêcher la sélection de texte involontaire */
+}
+
+.mobile-menu-item:hover {
+    background-color: rgba(147, 112, 219, 0.2);
+}
+
+.mobile-menu-item svg {
+    color: #9370db;
+}
+
+/* Update existing mobile queue and lyrics button containers */
+.mobile-lyrics-button-container,
+.mobile-queue-button-container {
+    display: none;
+    /* Hide the original buttons */
+}
+
+.close-mobile-lyrics,
+.close-mobile-queue {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    /* Supprimer la surbrillance sur appui mobile */
+    touch-action: manipulation;
+    /* Améliorer la gestion des interactions tactiles */
+    user-select: none;
+    /* Empêcher la sélection de texte involontaire */
+}
+
+/* Add styles for active control buttons */
+.control-btn.active-control {
+    color: #9370db;
+}
+
+.shuffle-btn.active-btn,
+.repeat-btn.active-btn {
+    color: #9370db;
+}
+
+/* Download button styles */
+.download-btn {
+    background: transparent;
+    border: none;
+    color: #B3B3B3;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+}
+
+.download-btn:hover {
+    color: #6C63FF;
+    background: rgba(147, 112, 219, 0.1);
+}
 </style>

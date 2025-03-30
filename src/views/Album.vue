@@ -17,7 +17,7 @@
                             class="hover:underline cursor-pointer flex items-center">
                             <router-link :to="'/artist/' + artist.id" class="ml-2">{{
                                 artist.name
-                                }}</router-link>
+                            }}</router-link>
                         </div>
                         <div>{{ albumData.year }}</div>
                     </div>
@@ -28,11 +28,11 @@
                 </div>
                 <div class="flex gap-4 mt-6 md:ml-8">
                     <button @click="play"
-                        class="bg-green-500 text-white px-6 py-2 rounded-full font-bold hover:bg-green-600">
+                        class="bg-violet-600 text-white px-6 py-2 rounded-full font-bold hover:bg-violet-700">
                         Play
                     </button>
                     <button @click="dl"
-                        class="bg-gray-800 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-700">
+                        class="bg-gray-900 text-white px-6 py-2 rounded-full font-bold hover:bg-gray-800">
                         Download
                     </button>
                 </div>
@@ -41,10 +41,10 @@
         <div class="w-[95%] mx-auto mt-8">
             <div class="flex justify-between mb-4 items-center">
                 <h2 class="text-xl font-bold text-white">Titres</h2>
-                <div class="flex items-center bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-md">
+                <div class="flex items-center bg-gray-900 rounded-lg overflow-hidden border border-gray-800 shadow-md">
                     <label for="sortBy" class="text-white px-3 py-2 text-sm">Trier par:</label>
                     <select id="sortBy" v-model="sortBy"
-                        class="bg-gray-700 text-white px-4 py-2 pr-8 rounded-r-lg border-l border-gray-600 appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer transition-all">
+                        class="bg-gray-900 text-white px-4 py-2 pr-8 rounded-r-lg border-l border-gray-800 appearance-none focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer transition-all">
                         <option value="default">Par défaut</option>
                         <option value="views">Nombre de vues</option>
                         <option value="duration">Durée</option>
@@ -56,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            <LineSong :force-album-data="toAlbumData()" :song-data="track" :force-thunm="albumData.thumbnails[0].url"
+            <LineSong :force-album-data="toAlbumData()" :song-data="track" :fallback-thumb="albumData.thumbnails[0].url"
                 v-for="track in sortedTracks" :key="track.videoId" />
         </div>
     </div>
@@ -71,7 +71,7 @@ import {
 } from "@/api";
 import LineSong from "@/components/LineSong.vue";
 import router from "@/router";
-import { playTrack, type PlayerServiceRequest } from "@/services/playerService";
+import { addToQueue, playTrack, type PlayerServiceRequest } from "@/services/playerService";
 import type { Album, AlbumData, Thumbnail } from "@/type";
 import { toast } from "vue3-toastify";
 
@@ -158,6 +158,7 @@ export default {
                 });
         },
         play() {
+
             const track: PlayerServiceRequest = {
                 Artists: this.albumData.artists,
                 Album: {
@@ -165,10 +166,23 @@ export default {
                     name: this.albumData.title,
                 },
                 cover: this.bestQualityTumb().url,
-                title: this.albumData.title,
+                title: this.albumData.tracks[0].title,
                 videoId: this.albumData.tracks[0].videoId,
             };
             playTrack(track);
+            for (const track of this.albumData.tracks.slice(1)) {
+                const queueTrack: PlayerServiceRequest = {
+                    Artists: track.artists,
+                    Album: {
+                        id: this.albumData.audioPlaylistId,
+                        name: this.albumData.title,
+                    },
+                    cover: this.bestQualityTumb().url,
+                    title: track.title,
+                    videoId: track.videoId,
+                }
+                addToQueue(queueTrack)
+            }
         },
         isPlaylist(): boolean {
             return this.$route.query.isPlaylist ? true : false;

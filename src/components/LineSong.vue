@@ -5,8 +5,7 @@
         <div class="flex flex-col sm:flex-row justify-between mb-1 text-white items-start sm:items-center">
             <div class="flex w-full sm:w-auto">
                 <div class="w-12 h-12 sm:w-16 sm:h-16 relative group">
-                    <img :src="forceThunm ? forceThunm : songData.thumbnails[0].url" alt="Song"
-                        class="w-full h-full rounded-lg shadow-md transition-all" />
+                    <img :src="thumb()" alt="Song" class="w-full h-full rounded-lg shadow-md transition-all" />
                     <div
                         class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 rounded-lg transition-all duration-300">
                         <div class="spotify-play-button">
@@ -90,7 +89,7 @@
 <script lang="ts">
 import router from '@/router';
 import type { Album, SongResult, Track } from '@/type';
-import { playTrack, type PlayerServiceRequest } from '@/services/playerService';
+import { playTrack, addToQueue, type PlayerServiceRequest } from '@/services/playerService';
 import { app_url, Download, getBestQualitythumbnail } from '@/api';
 
 // Create a global event bus for context menu management
@@ -102,7 +101,7 @@ export default {
             type: Object as () => SongResult | Track,
             required: true,
         },
-        forceThunm: {
+        fallbackThumb: {
             type: String,
             required: false,
         },
@@ -151,15 +150,12 @@ export default {
             this.hideContextMenu();
         },
         thumb(): string {
-            if (this.forceThunm) {
-                return this.forceThunm;
-            }
             if (Array.isArray(this.songData.thumbnails) && this.songData.thumbnails.length > 0) {
                 return getBestQualitythumbnail(this.songData.thumbnails).url;
             } else if (this.songData.thumbnails && typeof this.songData.thumbnails === 'string') {
                 return this.songData.thumbnails;
             } else {
-                return 'https://via.placeholder.com/150'; // Default image if none available
+                return this.fallbackThumb as string;
             }
         },
         formatViews(views: number): string {
@@ -240,8 +236,21 @@ export default {
             this.isContextMenuVisible = false;
         },
         addToQueue() {
-            // Implement add to queue functionality
-            console.log('Add to queue:', this.songData.title);
+            let trackData: PlayerServiceRequest = {
+                Artists: this.songData.artists,
+                cover: this.thumb(),
+                videoId: this.songData.videoId,
+                title: this.songData.title,
+            }
+            if (typeof this.songData.album !== 'string') {
+                trackData.Album = this.songData.album as Album;
+            }
+            // Use the addToQueue service method
+            addToQueue(trackData);
+
+            // Show a brief notification that the song was added
+            this.$emit('notification', `Added "${this.songData.title}" to queue`);
+
             this.hideContextMenu();
         },
         addToPlaylist() {
@@ -269,8 +278,9 @@ export default {
             this.hideContextMenu();
         },
         download() {
+            this.isContextMenuVisible = false;
             // document.location.href = `${app_url}/stream/${this.songData.videoId}`;
-            Download(this.songData.videoId, this.songData.title)
+            Download(this.songData.videoId, this.songData.title, this.thumb())
         },
         shareSong() {
             // Implement share functionality
@@ -317,40 +327,41 @@ export default {
 }
 
 .spotify-play-button {
-    filter: drop-shadow(0 0 4px rgba(30, 215, 96, 0.3));
+    filter: drop-shadow(0 0 4px rgba(147, 112, 219, 0.3));
     transition: all 0.2s ease;
 }
 
 .spotify-play-button:hover {
-    filter: drop-shadow(0 0 8px rgba(30, 215, 96, 0.5));
+    filter: drop-shadow(0 0 8px rgba(147, 112, 219, 0.5));
 }
 
 @keyframes pulse {
     0% {
         transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(30, 215, 96, 0.4);
+        box-shadow: 0 0 0 0 rgba(147, 112, 219, 0.4);
     }
 
     70% {
         transform: scale(1.02);
-        box-shadow: 0 0 0 6px rgba(30, 215, 96, 0);
+        box-shadow: 0 0 0 6px rgba(147, 112, 219, 0);
     }
 
     100% {
         transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(30, 215, 96, 0);
+        box-shadow: 0 0 0 0 rgba(147, 112, 219, 0);
     }
 }
 
 .context-menu {
     position: fixed;
     /* Important for correct positioning when teleported */
-    background: #282828;
+    background: #180a29;
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     min-width: 180px;
     z-index: 1000;
     overflow: hidden;
+    border: 1px solid rgba(147, 112, 219, 0.2);
 }
 
 .menu-item {
@@ -363,7 +374,7 @@ export default {
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #1ed760;
+    background: rgba(147, 112, 219, 0.15);
+    color: #b19cd9;
 }
 </style>

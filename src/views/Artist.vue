@@ -51,19 +51,19 @@
   </div>
   <div v-else class="relative">
     <img :src="getLargestThumb()" :alt="data.name" class="w-full object-cover h-80" />
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-950">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0c0414]">
       <div
         class="text-white flex flex-col xl:flex-row items-start xl:items-end xl:justify-between px-10 xl:px-40 h-full">
         <div class="flex items-center gap-2">
           <img :src="data.thumbnails[0].url" :alt="data.name"
-            class="w-40 h-40 object-cover rounded-full border-4 border-green-500" />
+            class="w-40 h-40 object-cover rounded-full border-4 border-violet-600" />
           <div>
             <div class="font-bold text-4xl xl:text-6xl">{{ data.name }}</div>
             <div class="text-sm xl:text-base mt-2">2,345,678 monthly listeners</div>
           </div>
         </div>
         <div class="mt-4 xl:mt-0">
-          <button class="bg-green-500 text-black font-bold py-2 px-6 rounded-full hover:bg-green-600 shadow-lg">
+          <button class="bg-violet-600 text-white font-bold py-2 px-6 rounded-full hover:bg-violet-700 shadow-lg">
             Play
           </button>
         </div>
@@ -83,7 +83,7 @@
           <div v-if="!showFullDescription && formattedDescription.length > 300">
             <p v-html="truncatedDescription" class="mb-3"></p>
             <button @click="showFullDescription = true"
-              class="text-green-500 hover:text-green-400 font-medium flex items-center transition-all">
+              class="text-violet-400 hover:text-violet-300 font-medium flex items-center transition-all">
               Read more
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -94,7 +94,7 @@
           <div v-else>
             <div v-html="formattedDescription" class="mb-3"></div>
             <button v-if="formattedDescription.length > 300" @click="showFullDescription = false"
-              class="text-green-500 hover:text-green-400 font-medium flex items-center transition-all">
+              class="text-violet-400 hover:text-violet-300 font-medium flex items-center transition-all">
               Show less
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -230,10 +230,10 @@ export default {
 :deep(.v-skeleton-loader__paragraph),
 :deep(.v-skeleton-loader__list-item-two-line),
 :deep(.v-skeleton-loader__card) {
-  @apply bg-gray-800;
+  @apply bg-gray-900;
 }
 
 :deep(.v-skeleton-loader__bone) {
-  background-image: linear-gradient(90deg, rgba(55, 65, 81, 0.3), rgba(75, 85, 99, 0.5), rgba(55, 65, 81, 0.3));
+  background-image: linear-gradient(90deg, rgba(30, 15, 50, 0.3), rgba(55, 30, 85, 0.5), rgba(30, 15, 50, 0.3));
 }
 </style>

@@ -11,9 +11,9 @@
             <div class="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300"
                 @click="cancelNavigation"></div>
             <div
-                class="bg-gray-800 rounded-xl p-7 max-w-md w-full mx-4 relative z-10 border border-gray-700 shadow-2xl transform transition-all duration-300 ease-in-out">
+                class="bg-violet-950 rounded-xl p-7 max-w-md w-full mx-4 relative z-10 border border-violet-900 shadow-2xl transform transition-all duration-300 ease-in-out">
                 <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
-                    <span class="mr-3 text-indigo-400">
+                    <span class="mr-3 text-violet-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -24,20 +24,20 @@
                 </h3>
                 <p class="text-gray-300 mb-3">Vous êtes sur le point de quitter ce site pour visiter:</p>
                 <p
-                    class="text-indigo-400 mb-6 break-all font-medium bg-gray-900/50 p-3 rounded-lg border border-gray-700">
+                    class="text-violet-400 mb-6 break-all font-medium bg-violet-950/50 p-3 rounded-lg border border-violet-900">
                     {{ pendingUrl }}</p>
 
                 <div class="grid grid-cols-3 gap-3">
                     <button @click="cancelNavigation"
-                        class="col-span-1 px-4 py-2.5 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 font-medium text-sm">
+                        class="col-span-1 px-4 py-2.5 bg-violet-900 text-white rounded-lg hover:bg-violet-800 transition-colors duration-200 font-medium text-sm">
                         Annuler
                     </button>
                     <button @click="confirmNavigation"
-                        class="col-span-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors duration-200 font-medium text-sm">
+                        class="col-span-1 px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors duration-200 font-medium text-sm">
                         Continuer
                     </button>
                     <button @click="skipConfirmationsAndNavigate"
-                        class="col-span-1 px-2 py-2.5 bg-gray-800 text-indigo-300 rounded-lg hover:bg-gray-700 border border-gray-700 transition-colors duration-200 font-medium text-sm">
+                        class="col-span-1 px-2 py-2.5 bg-violet-950 text-violet-400 rounded-lg hover:bg-violet-900 border border-violet-900 transition-colors duration-200 font-medium text-sm">
                         Ne plus demander
                     </button>
                 </div>

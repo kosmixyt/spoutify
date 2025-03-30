@@ -3,6 +3,7 @@ import Landing from "../views/Landing.vue";
 import Artist from "@/views/Artist.vue";
 import Album from "@/views/Album.vue";
 import Search from "@/views/Search.vue";
+import Offline from "@/views/Offline.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: "/search/",
       name: "Search",
       component: Search,
+    },
+    {
+      path: "/offline",
+      name: "Offline",
+      component: Offline,
     },
     // {
     //   path: "/",

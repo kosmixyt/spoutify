@@ -43,3 +43,11 @@ export function playPlaylist(
     })
   );
 }
+
+// Add to queue function
+export function addToQueue(track: PlayerServiceRequest) {
+  // Create a custom event for adding to queue
+  const event = new CustomEvent("add-to-queue", { detail: track });
+  // Dispatch the event
+  window.dispatchEvent(event);
+}
