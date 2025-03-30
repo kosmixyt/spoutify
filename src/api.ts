@@ -13,20 +13,27 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Capacitor } from "@capacitor/core";
 import { Toast } from "@capacitor/toast";
 import { toast } from "vue3-toastify";
+import router from "./router";
 
 export const app_url = "https://uw4s8co8wgkkg8g004cs8os8.kosmix.me";
 
-export var token = "";
-export async function getToken(): Promise<string> {
+export var token = localStorage.getItem("token") || "";
+export async function getToken(
+  username?: string,
+  password?: string
+): Promise<string> {
   const res = await fetch(`${app_url}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      username: "newuser@example.com",
-      password: "newpassword123",
-    }),
+    body:
+      username && password
+        ? new URLSearchParams({
+            username,
+            password,
+          })
+        : undefined,
   });
 
   const data = await res.json();
@@ -35,23 +42,69 @@ export async function getToken(): Promise<string> {
   }
   if (data.access_token) {
     token = data.access_token;
+    localStorage.setItem("token", token);
   }
   return data.access_token;
 }
 
-export async function GetHome(): Promise<Home> {
-  const res = await fetch(`${app_url}/home`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(data.error);
+export function logout() {
+  localStorage.removeItem("token");
+  token = "";
+  router.push("/login");
+}
+
+// Check if we have a valid token
+export function checkAuthStatus(): boolean {
+  return !!localStorage.getItem("token");
+}
+
+// Handle API calls with automatic authentication handling
+export async function authenticatedFetch(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  if (!token) {
+    token = localStorage.getItem("token") || "";
   }
-  return data as Home;
+
+  // Add the auth header if we have a token
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    "Content-Type": "application/json",
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  // Handle 401 Unauthorized responses
+  if (response.status === 401) {
+    logout();
+    throw new Error("Authentication required. Please log in again.");
+  }
+
+  return response;
+}
+
+export async function GetHome(): Promise<Home> {
+  try {
+    const res = await authenticatedFetch(`${app_url}/home`);
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    return data as Home;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Authentication required")
+    ) {
+      router.push("/login");
+    }
+    throw error;
+  }
 }
 
 export async function DownloadAlbum(
@@ -71,14 +124,16 @@ export async function DownloadAlbum(
 
     for (const track of tracks) {
       progress(downloadedTracks, totalTracks);
-      const res = await fetch(`${app_url}/stream/${track.videoId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await authenticatedFetch(
+        `${app_url}/stream/${track.videoId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
       const contentLength = res.headers.get("Content-Length");
       const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
       let receivedSize = 0;
@@ -151,119 +206,144 @@ export async function Download(
   artists = null,
   album = null
 ) {
-  const res = await fetch(`${app_url}/stream/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-
-  const contentLength = res.headers.get("Content-Length");
-  const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
-  let receivedSize = 0;
-
-  const reader = res.body?.getReader();
-  const chunks: Uint8Array[] = [];
-
-  // Affiche un toast de progression
   const toastId = toast("Téléchargement en cours...", {
     autoClose: false,
     isLoading: true,
   });
 
-  if (reader) {
-    let lastPercent = 0;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+  try {
+    const res = await authenticatedFetch(`${app_url}/stream/${id}`, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
-      chunks.push(value);
-      receivedSize += value.length;
+    const contentLength = res.headers.get("Content-Length");
+    const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+    let receivedSize = 0;
 
-      const progress = totalSize ? (receivedSize / totalSize) * 100 : 0;
-      console.log(receivedSize, totalSize);
-      console.log(`Downloading: ${Math.round(progress)}%`);
-      if (Math.round(progress) - lastPercent > 5) {
-        lastPercent = Math.round(progress);
-        toast.update(toastId, {
-          render: `Téléchargement en cours... ${Math.round(progress)}%`,
-          type: "info",
-          isLoading: true,
-        });
+    const reader = res.body?.getReader();
+    const chunks: Uint8Array[] = [];
+
+    // Affiche un toast de progression
+    if (reader) {
+      let lastPercent = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        receivedSize += value.length;
+
+        const progress = totalSize ? (receivedSize / totalSize) * 100 : 0;
+        console.log(receivedSize, totalSize);
+        console.log(`Downloading: ${Math.round(progress)}%`);
+        if (Math.round(progress) - lastPercent > 5) {
+          lastPercent = Math.round(progress);
+          toast.update(toastId, {
+            render: `Téléchargement en cours... ${Math.round(progress)}%`,
+            type: "info",
+            isLoading: true,
+          });
+        }
       }
     }
-  }
 
-  const blob = new Blob(chunks, { type: "audio/mpeg" });
+    const blob = new Blob(chunks, { type: "audio/mpeg" });
 
-  if (Capacitor.isNativePlatform()) {
-    // Get the track details to fetch the thumbnail
-    try {
-      const res = await fetch(thumbnail_url, {});
-      const thumbnailBlob = await res.blob();
-      const thumbnailBase64 = await blobToBase64(thumbnailBlob);
-      const thumbnailData = `data:image/jpeg;base64,${thumbnailBase64}`;
-      await saveOfflineTrack(
-        id,
-        name,
-        "Unknown Artist",
-        blob,
-        thumbnailData,
-        artists,
-        album
-      );
-    } catch (error) {
-      console.error("Error saving offline track:", error);
+    if (Capacitor.isNativePlatform()) {
+      // Get the track details to fetch the thumbnail
+      try {
+        const res = await fetch(thumbnail_url, {});
+        const thumbnailBlob = await res.blob();
+        const thumbnailBase64 = await blobToBase64(thumbnailBlob);
+        const thumbnailData = `data:image/jpeg;base64,${thumbnailBase64}`;
+        await saveOfflineTrack(
+          id,
+          name,
+          "Unknown Artist",
+          blob,
+          thumbnailData,
+          artists,
+          album
+        );
+      } catch (error) {
+        console.error("Error saving offline track:", error);
+        toast.update(toastId, {
+          render: "Erreur lors de la sauvegarde hors ligne",
+          type: "error",
+          autoClose: 3000,
+          isLoading: false,
+        });
+        return;
+      }
+
       toast.update(toastId, {
-        render: "Erreur lors de la sauvegarde hors ligne",
+        render: "Téléchargement terminé et sauvegardé hors ligne !",
+        type: "success",
+        autoClose: 3000,
+        isLoading: false,
+      });
+    } else {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = `${name}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      console.log("Download complete", toastId);
+      toast.update(toastId, {
+        render: "Téléchargement terminé !",
+        type: "success",
+        autoClose: 3000,
+        isLoading: false,
+      });
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Authentication required")
+    ) {
+      toast.update(toastId, {
+        render: "Session expired, please log in again",
         type: "error",
         autoClose: 3000,
         isLoading: false,
       });
+      router.push("/login");
       return;
     }
 
     toast.update(toastId, {
-      render: "Téléchargement terminé et sauvegardé hors ligne !",
-      type: "success",
+      render: "Error downloading file",
+      type: "error",
       autoClose: 3000,
       isLoading: false,
     });
-  } else {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
-    a.href = url;
-    a.download = `${name}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    console.log("Download complete", toastId);
-    toast.update(toastId, {
-      render: "Téléchargement terminé !",
-      type: "success",
-      autoClose: 3000,
-      isLoading: false,
-    });
+    console.error(error);
   }
 }
 
 export async function GetArtist(id: string): Promise<MainArtist> {
-  const res = await fetch(`${app_url}/artist/${id}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(data.error);
+  try {
+    const res = await authenticatedFetch(`${app_url}/artist/${id}`);
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    return data as MainArtist;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Authentication required")
+    ) {
+      router.push("/login");
+    }
+    throw error;
   }
-  return data as MainArtist;
 }
 
 export function getLargestThumbnail(thumbnails: Thumbnail[]): string {
@@ -278,13 +358,7 @@ export function getLargestThumbnail(thumbnails: Thumbnail[]): string {
   return largestUrl;
 }
 export async function GetAlbum(id: string) {
-  const res = await fetch(`${app_url}/album/${id}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await authenticatedFetch(`${app_url}/album/${id}`);
   const data = await res.json();
   if (data.error) {
     throw new Error(data.error);
@@ -292,13 +366,7 @@ export async function GetAlbum(id: string) {
   return data as AlbumData;
 }
 export async function GetPlaylist(id: string): Promise<AlbumData> {
-  const res = await fetch(`${app_url}/playlist/${id}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await authenticatedFetch(`${app_url}/playlist/${id}`);
   const data = await res.json();
   if (data.error) {
     throw new Error(data.error);
@@ -322,13 +390,7 @@ export async function Search(
   query: string,
   filter: string
 ): Promise<SearchItem[]> {
-  const res = await fetch(`${app_url}/search?query=${query}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await authenticatedFetch(`${app_url}/search?query=${query}`);
   const data = await res.json();
   if (data.error) {
     throw new Error(data.error);
@@ -337,13 +399,7 @@ export async function Search(
 }
 
 export async function GetLyrics(videoId: string): Promise<string> {
-  const res = await fetch(`${app_url}/lyrics/${videoId}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await authenticatedFetch(`${app_url}/lyrics/${videoId}`);
   const data = await res.json();
   if (data.error) {
     throw new Error(data.error);

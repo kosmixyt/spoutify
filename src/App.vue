@@ -5,8 +5,12 @@ import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import router from './router';
 
+const route = useRoute();
+const isFullscreenRoute = computed(() => {
+  return route.path === '/login';
+});
+
 const isActive = (is: string) => {
-  const route = useRoute()
   return route.path === is
 }
 
@@ -17,7 +21,11 @@ const toggleMobileSidebar = () => {
 </script>
 
 <template>
-  <div class="flex bg-[#0c0414] relative">
+  <!-- Full-screen login view -->
+  <RouterView v-if="isFullscreenRoute" />
+
+  <!-- Regular app layout -->
+  <div v-else class="flex bg-[#0c0414] relative">
     <!-- Semi-transparent overlay when sidebar is open on mobile -->
     <div v-if="isMobileSidebarOpen" @click="toggleMobileSidebar"
       class="md:hidden fixed inset-0 bg-black bg-opacity-70 z-30 transition-opacity duration-300"></div>
@@ -39,8 +47,19 @@ const toggleMobileSidebar = () => {
           </div>
         </div>
         <div class="mr-6">
-          <div class="bg-[#1a0b2e] hover:bg-[#250e3d] rounded-full p-1.5 cursor-pointer transition-all hover:scale-105">
+          <div @click="toggleUserMenu"
+            class="bg-[#1a0b2e] hover:bg-[#250e3d] rounded-full p-1.5 cursor-pointer transition-all hover:scale-105 relative">
             <v-icon name="fa-user-circle" class="text-white" scale="1.5" />
+
+            <!-- Add a user menu dropdown -->
+            <div v-if="showUserMenu"
+              class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#1a0b2e] ring-1 ring-black ring-opacity-5">
+              <div class="py-1">
+                <a @click="handleLogout" class="block px-4 py-2 text-sm text-white hover:bg-[#250e3d] cursor-pointer">
+                  <v-icon name="fa-sign-out-alt" class="mr-2" /> Sign out
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -124,15 +143,18 @@ const toggleMobileSidebar = () => {
       <RouterView />
     </div>
   </div>
-  <GlobalAudioPlayer />
+  <GlobalAudioPlayer v-if="!isFullscreenRoute" />
 </template>
 
 <script lang="ts">
+import { logout } from './api';
+
 export default {
   data() {
     return {
       searchData: '',
       window: window,
+      showUserMenu: false
     }
   },
   mounted() {
@@ -148,7 +170,10 @@ export default {
         }
       });
     }
-
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
     isNative() {
@@ -163,6 +188,19 @@ export default {
         searchInput.focus()
       }
     },
+    toggleUserMenu() {
+      this.showUserMenu = !this.showUserMenu;
+    },
+    handleLogout() {
+      logout();
+      this.showUserMenu = false;
+    },
+    // Hide user menu when clicking outside
+    handleClickOutside(event: Event) {
+      if (this.showUserMenu && !event.target) {
+        this.showUserMenu = false;
+      }
+    }
   },
 }
 </script>
