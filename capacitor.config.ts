@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: 'fr.kosmix.spoutify',
   appName: 'spoutify',
   webDir: 'dist'
+  
 };
 
 export default config;

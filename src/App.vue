@@ -53,8 +53,8 @@ const toggleMobileSidebar = () => {
       }">
         <div class="p-5">
           <div class="text-white font-bold text-2xl mb-6 flex items-center">
-            <v-icon name="fa-music" class="text-violet-500 mr-2" scale="1.2" />
-            <span>Spoutify</span>
+            <!-- <v-icon name="fa-music" class="text-violet-500 mr-2" scale="1.2" /> -->
+            <img v-if="window.innerWidth >= 768" src="/icon.png" />
           </div>
 
           <div class="flex flex-col space-y-2">
