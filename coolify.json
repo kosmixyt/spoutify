@@ -1,0 +1,13 @@
+{
+  "name": "spoutify-app",
+  "port": 80,
+  "dockerfilePath": "./Dockerfile",
+  "build": {
+    "type": "dockerfile",
+    "config": {
+      "dockerfile": "./Dockerfile"
+    }
+  },
+  "publicPort": 80,
+  "deploymentStrategy": "docker"
+}
