@@ -19,7 +19,17 @@
                             <p>{{ track.artist }}</p>
                         </div>
                     </div>
-                    <button @click="playTrack(track)" class="play-button">Play</button>
+                    <div class="track-actions">
+                        <button @click="playTrack(track)" class="play-button">Play</button>
+                        <button @click="deleteTrack(track)" class="delete-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="currentColor">
+                                <path
+                                    d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
                 </li>
             </ul>
         </div>
@@ -34,6 +44,7 @@ import {
 import { App } from '@capacitor/app';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import router from '@/router';
+import { toast } from 'vue3-toastify';
 
 const isNativePlatform = Capacitor.isNativePlatform();
 const tracks = ref<{
@@ -42,6 +53,8 @@ const tracks = ref<{
     artist: string;
     path: string;
     cover: string | null;
+    artists?: Array<{ name: string, id: string | null }>;
+    album?: any;
 }[]>([]);
 
 console.log(isNativePlatform)
@@ -83,8 +96,9 @@ const playTrack = async (track: typeof tracks.value[0]) => {
             detail: {
                 videoId: null, // No video ID for offline tracks
                 title: track.title,
-                Artists: [{ name: track.artist, id: null }],
+                Artists: track.artists || [{ name: track.artist, id: null }],
                 cover: track.cover || null,
+                Album: track.album || null,
                 audioBuffer: audioData, // Send the base64 audio data
                 isOfflineTrack: true,
             }
@@ -93,6 +107,44 @@ const playTrack = async (track: typeof tracks.value[0]) => {
         window.dispatchEvent(playEvent);
     } catch (error) {
         console.error('Error playing track:', error);
+    }
+};
+
+const deleteTrack = async (track: typeof tracks.value[0]) => {
+    if (!isNativePlatform) return;
+
+    if (!confirm(`Are you sure you want to delete "${track.title}"?`)) {
+        return;
+    }
+
+    try {
+        // Delete the audio file
+        await Filesystem.deleteFile({
+            path: track.path,
+            directory: Directory.Data
+        });
+
+        // Update metadata to remove this track
+        const metadataFile = "offline_tracks.json";
+        const updatedTracks = tracks.value.filter(t => t.id !== track.id);
+
+        // Save updated metadata
+        const base64Metadata = btoa(JSON.stringify(updatedTracks));
+        await Filesystem.writeFile({
+            path: metadataFile,
+            data: base64Metadata,
+            directory: Directory.Data,
+        });
+
+        // Update local state
+        tracks.value = updatedTracks;
+
+        // Show success notification
+        toast.success(`"${track.title}" has been deleted`);
+
+    } catch (error) {
+        console.error('Error deleting track:', error);
+        toast.error("Failed to delete track");
     }
 };
 
@@ -162,19 +214,41 @@ onMounted(() => {
     margin: 0;
 }
 
-.play-button {
-    background: #6C63FF;
-    color: white;
+.track-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.play-button,
+.delete-button {
     border: none;
     border-radius: 20px;
     padding: 8px 16px;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.play-button {
+    background: #6C63FF;
+    color: white;
 }
 
 .play-button:hover {
     background: #8075FF;
+}
+
+.delete-button {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.delete-button:hover {
+    background: rgba(255, 59, 48, 0.2);
 }
 
 .empty-state {

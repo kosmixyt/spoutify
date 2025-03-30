@@ -280,7 +280,13 @@ export default {
         download() {
             this.isContextMenuVisible = false;
             // document.location.href = `${app_url}/stream/${this.songData.videoId}`;
-            Download(this.songData.videoId, this.songData.title, this.thumb())
+            Download(
+                this.songData.videoId,
+                this.songData.title,
+                this.thumb(),
+                this.songData.artists,
+                this.albumData()
+            )
         },
         shareSong() {
             // Implement share functionality

@@ -10,7 +10,37 @@
 
         <!-- Results sections -->
         <div v-else>
-            <!-- Empty search message -->
+            <!-- Offline tracks section -->
+            <div v-if="matchingOfflineTracks.length > 0" class="mt-3 sm:mt-4 md:mt-8">
+                <h2 class="text-base sm:text-lg md:text-2xl font-bold mb-1 sm:mb-2 md:mb-4">
+                    <span class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Downloaded Tracks
+                    </span>
+                </h2>
+                <div class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 sm:gap-2 md:gap-3">
+                    <div @click="playOfflineTrack(track)" v-for="track in matchingOfflineTracks" :key="track.id"
+                        class="p-1 sm:p-2 bg-zinc-900/50 backdrop-blur rounded-lg hover:bg-zinc-800/50 active:bg-zinc-700/50 cursor-pointer transition-colors touch-manipulation">
+                        <div
+                            class="w-full aspect-square bg-zinc-800 rounded relative flex items-center justify-center overflow-hidden">
+                            <img v-if="track.cover" :src="track.cover" class="w-full h-full object-cover" />
+                            <div v-else class="text-3xl text-zinc-600">🎵</div>
+                            <div
+                                class="absolute bottom-1 right-1 bg-green-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                Offline
+                            </div>
+                        </div>
+                        <div class="mt-0.5 sm:mt-1">
+                            <div class="font-semibold text-xs sm:text-sm truncate">{{ track.title }}</div>
+                            <div class="text-zinc-400 text-xs truncate">{{ track.artist }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Top Result Section -->
             <div v-if="getTopResult()" class="mt-3 sm:mt-4 md:mt-8">
@@ -156,6 +186,9 @@ import { getBestQualitythumbnail, Search } from '@/api';
 import LineSong from '@/components/LineSong.vue';
 import { playTrack, type PlayerServiceRequest } from '@/services/playerService';
 import type { SearchItem, Thumbnail } from '@/type';
+import { ref, computed } from 'vue';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 
 export default {
@@ -165,7 +198,32 @@ export default {
             results: [] as SearchItem[],
             searchTimer: null as number | null,
             query: this.$route.query.q as string,
+            offlineTracks: [] as {
+                id: string;
+                title: string;
+                artist: string;
+                path: string;
+                cover: string | null;
+            }[],
+            isNativePlatform: Capacitor.isNativePlatform()
         }
+    },
+
+    computed: {
+        matchingOfflineTracks() {
+            if (!this.query || this.query.trim() === '') {
+                return [];
+            }
+            const lowercaseQuery = this.query.toLowerCase();
+            return this.offlineTracks.filter(track =>
+                track.title.toLowerCase().includes(lowercaseQuery) ||
+                track.artist.toLowerCase().includes(lowercaseQuery)
+            );
+        }
+    },
+
+    mounted() {
+        this.loadOfflineTracks();
     },
 
     watch: {
@@ -179,6 +237,49 @@ export default {
     },
 
     methods: {
+        async loadOfflineTracks() {
+            if (!this.isNativePlatform) return;
+
+            try {
+                const result = await Filesystem.readFile({
+                    path: 'offline_tracks.json',
+                    directory: Directory.Data,
+                });
+                const fromBase64 = atob(result.data as string);
+                this.offlineTracks = JSON.parse(fromBase64);
+                console.log('Offline tracks loaded for search:', this.offlineTracks.length);
+            } catch (error) {
+                console.error('Error loading offline tracks for search:', error);
+                this.offlineTracks = [];
+            }
+        },
+
+        playOfflineTrack(track: typeof this.offlineTracks[0]) {
+            if (!this.isNativePlatform) return;
+
+            Filesystem.readFile({
+                path: track.path,
+                directory: Directory.Data,
+            }).then(audioResult => {
+                const audioData = audioResult.data as string;
+
+                const playEvent = new CustomEvent('play-track', {
+                    detail: {
+                        videoId: null, // No video ID for offline tracks
+                        title: track.title,
+                        Artists: [{ name: track.artist, id: null }],
+                        cover: track.cover || null,
+                        audioBuffer: audioData,
+                        isOfflineTrack: true,
+                    }
+                });
+
+                window.dispatchEvent(playEvent);
+            }).catch(error => {
+                console.error('Error playing offline track:', error);
+            });
+        },
+
         debouncedSearch(query: string) {
             // Clear any existing timer
             if (this.searchTimer !== null) {

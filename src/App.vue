@@ -33,7 +33,8 @@ const toggleMobileSidebar = () => {
           <div class="relative">
             <v-icon name="fa-search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               scale="1" />
-            <input ref="search" v-model="searchData" v-on:input="search" type="text" placeholder="Search..."
+            <input @focus="isMobileSidebarOpen = false" ref="search" v-model="searchData" v-on:input="search"
+              type="text" placeholder="Search..."
               class="text-white pl-10 pr-4 py-2 rounded-full h-9 bg-[#1a0b2e] hover:bg-[#250e3d] focus:bg-[#250e3d] focus:outline-none focus:ring-1 focus:ring-violet-600 transition-all w-64" />
           </div>
         </div>
@@ -82,7 +83,7 @@ const toggleMobileSidebar = () => {
               <span class="text-sm font-medium">Library</span>
             </RouterLink>
 
-            <RouterLink @click="isMobileSidebarOpen = false; focusSearch()" to="/search" :class="{
+            <RouterLink @click="focusSearch()" to="/search" :class="{
               'bg-[#1a0b2e] text-white': $route.path === '/search',
               'text-gray-300 hover:text-white': $route.path !== '/search'
             }" class="flex items-center py-2.5 px-3 rounded-md transition-all duration-200 group">

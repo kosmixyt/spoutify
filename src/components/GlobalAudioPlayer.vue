@@ -334,7 +334,11 @@
                 <div class="full-track-details">
                     <div class="full-title" v-if="currentTrack">{{ currentTrack.title }}</div>
                     <div class="full-artist" v-if="currentTrack && currentTrack.Artists && currentTrack.Artists.length">
-                        {{currentTrack.Artists.map(a => a.name).join(', ')}}
+                        <router-link v-for="(artist, index) in currentTrack.Artists" :key="index"
+                            :to="artist.id ? `/artist/${artist.id}` : ''" class="artist-link"
+                            :class="{ 'non-clickable': !artist.id }">
+                            {{ artist.name }}<span v-if="index < currentTrack.Artists.length - 1">, </span>
+                        </router-link>
                     </div>
                 </div>
 
@@ -477,7 +481,7 @@
                                 <div class="mobile-queue-item-details">
                                     <div class="mobile-queue-item-title">{{ track.title }}</div>
                                     <div class="mobile-queue-item-artist">{{track.Artists.map(a => a.name).join(', ')
-                                        }}
+                                    }}
                                     </div>
                                 </div>
                                 <div class="mobile-queue-item-duration">{{ formatTime(track.duration) }}</div>
@@ -3249,5 +3253,21 @@ export default defineComponent({
 .download-btn:hover {
     color: #6C63FF;
     background: rgba(147, 112, 219, 0.1);
+}
+
+/* Add these new styles for clickable artists in mobile player */
+.artist-link {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.artist-link:not(.non-clickable):hover {
+    color: #9370db;
+    text-decoration: underline;
+}
+
+.non-clickable {
+    pointer-events: none;
 }
 </style>

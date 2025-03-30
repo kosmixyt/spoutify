@@ -129,7 +129,9 @@ export async function DownloadAlbum(
     await Download(
       track.videoId,
       track.title,
-      getBestQualitythumbnail(data.thumbnails).url
+      getBestQualitythumbnail(data.thumbnails).url,
+      track.artists,
+      data
     );
     downloadedTracks++;
   }
@@ -145,7 +147,9 @@ export async function DownloadAlbum(
 export async function Download(
   id: string,
   name: string,
-  thumbnail_url: string
+  thumbnail_url: string,
+  artists = null,
+  album = null
 ) {
   const res = await fetch(`${app_url}/stream/${id}`, {
     method: "GET",
@@ -201,7 +205,15 @@ export async function Download(
       const thumbnailBlob = await res.blob();
       const thumbnailBase64 = await blobToBase64(thumbnailBlob);
       const thumbnailData = `data:image/jpeg;base64,${thumbnailBase64}`;
-      await saveOfflineTrack(id, name, "Unknown Artist", blob, thumbnailData);
+      await saveOfflineTrack(
+        id,
+        name,
+        "Unknown Artist",
+        blob,
+        thumbnailData,
+        artists,
+        album
+      );
     } catch (error) {
       console.error("Error saving offline track:", error);
       toast.update(toastId, {
@@ -344,7 +356,9 @@ export async function saveOfflineTrack(
   title: string,
   artist: string,
   audioBlob: Blob,
-  thumbnailBase64: string | null = null
+  thumbnailBase64: string | null = null,
+  artistsData = null,
+  albumData = null
 ) {
   const fileName = `${id}.mp3`;
   const metadataFile = "offline_tracks.json";
@@ -394,6 +408,8 @@ export async function saveOfflineTrack(
       artist,
       path: fileName,
       cover: thumbnailBase64,
+      artists: artistsData || [{ name: artist, id: null }],
+      album: albumData || null,
     };
   } else {
     // Add new track metadata
@@ -403,6 +419,8 @@ export async function saveOfflineTrack(
       artist,
       path: fileName,
       cover: thumbnailBase64,
+      artists: artistsData || [{ name: artist, id: null }],
+      album: albumData || null,
     });
   }
 
