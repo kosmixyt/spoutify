@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { getToken } from '@/api';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
+import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
+import { Capacitor } from '@capacitor/core';
 
 const username = ref('');
 const password = ref('');
 const isLoading = ref(false);
+const isNativePlatform = ref(Capacitor.isNativePlatform());
 const router = useRouter();
 
 const login = async () => {
@@ -26,6 +29,48 @@ const login = async () => {
         isLoading.value = false;
     }
 };
+
+const saveCredentials = async () => {
+    if (!Capacitor.isNativePlatform()) {
+        toast.error('This feature is only available on native platforms');
+        return;
+    }
+
+    try {
+        await SecureStoragePlugin.set({ key: 'username', value: username.value });
+        await SecureStoragePlugin.set({ key: 'password', value: password.value });
+        toast.success('Credentials saved securely!');
+    } catch (error: any) {
+        toast.error(error.message || 'Failed to save credentials');
+    }
+};
+
+const tryAutoLogin = async () => {
+    if (!Capacitor.isNativePlatform()) {
+        return;
+    }
+
+    isLoading.value = true;
+    try {
+        const usernameData = await SecureStoragePlugin.get({ key: 'username' });
+        const passwordData = await SecureStoragePlugin.get({ key: 'password' });
+
+        if (usernameData.value && passwordData.value) {
+            username.value = usernameData.value;
+            password.value = passwordData.value;
+            await login();
+        }
+    } catch (error) {
+        // Silent fail - no credentials found or other error
+        console.log('No saved credentials found');
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    tryAutoLogin();
+});
 </script>
 
 <template>
@@ -57,6 +102,11 @@ const login = async () => {
                     :disabled="isLoading">
                     <span v-if="isLoading">Signing in...</span>
                     <span v-else>Sign In</span>
+                </button>
+                <button v-if="isNativePlatform" type="button"
+                    class="w-full py-2 px-4 bg-gradient-to-r from-green-600 to-green-800 text-white font-medium rounded-md hover:from-green-700 hover:to-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                    @click="saveCredentials">
+                    Save Credentials
                 </button>
             </form>
         </div>

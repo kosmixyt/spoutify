@@ -19,6 +19,7 @@
     "@capacitor/ios": "^7.1.0",
     "@capacitor/toast": "^7.0.0",
     "@jofr/capacitor-media-session": "^4.0.0",
+    "capacitor-secure-storage-plugin": "^0.11.0",
     "gsap": "^3.12.7",
     "jszip": "^3.10.1",
     "oh-vue-icons": "1.0.0-rc3",

@@ -32,6 +32,9 @@ importers:
       '@jofr/capacitor-media-session':
         specifier: ^4.0.0
         version: 4.0.0(@capacitor/core@7.1.0)
+      capacitor-secure-storage-plugin:
+        specifier: ^0.11.0
+        version: 0.11.0(@capacitor/core@7.1.0)
       gsap:
         specifier: ^3.12.7
         version: 3.12.7
@@ -997,6 +1000,11 @@ packages:
 
   caniuse-lite@1.0.30001690:
     resolution: {integrity: sha512-5ExiE3qQN6oF8Clf8ifIDcMRCRE/dMGcETG/XGMD8/XiXm6HXQgQTh1yZYLXXpSOsEUlJm1Xr7kGULZTuGtP/w==}
+
+  capacitor-secure-storage-plugin@0.11.0:
+    resolution: {integrity: sha512-1fs+RifRlKia+7U68Ekm+5FrX5OiWK/MBvtFdfFR2t7enh3rrIHuemA1+0Rkl3IWcQ6XOcL/6lOb5elZq9IMTA==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -3889,6 +3897,10 @@ snapshots:
   camelcase@5.3.1: {}
 
   caniuse-lite@1.0.30001690: {}
+
+  capacitor-secure-storage-plugin@0.11.0(@capacitor/core@7.1.0):
+    dependencies:
+      '@capacitor/core': 7.1.0
 
   chalk@2.4.2:
     dependencies:
